@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "JTube React",
+  "description": "Enhanced YouTube transcript viewer with React UI",
+  "version": "1.0",
+  "action": {
+    "default_title": "JTube React",
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icon-16.png",
+      "32": "icon-32.png",
+      "48": "icon-48.png",
+      "128": "icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icon-16.png",
+    "32": "icon-32.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "permissions": [
+    "scripting",
+    "clipboard-write",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.youtube.com/*"
+  ]
+}

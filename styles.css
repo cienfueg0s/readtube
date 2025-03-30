@@ -1,0 +1,646 @@
+.metube-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  gap: 16px;
+  background: #ffffff;
+}
+
+.metube-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #f8f8f8;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.metube-message {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  max-width: 85%;
+  line-height: 1.5;
+}
+
+.metube-system-message {
+  background: #f8f9fa;
+  color: #333;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 95%;
+}
+
+.metube-user-message {
+  background: #e3f2fd;
+  margin-left: auto;
+  color: #1565c0;
+}
+
+.metube-ai-message {
+  background: #f5f5f5;
+  margin-right: auto;
+  color: #333;
+}
+
+.metube-input-container {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  background: #ffffff;
+  border-top: 1px solid #eee;
+}
+
+.metube-chat-input {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.metube-chat-input:focus {
+  outline: none;
+  border-color: #ff0000;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.1);
+}
+
+.metube-send-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: #ff0000;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.metube-send-button:hover {
+  background: #cc0000;
+  transform: translateY(-1px);
+}
+
+.metube-send-button:active {
+  transform: translateY(0);
+}
+
+/* Transcript styles */
+.metube-transcript-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+}
+
+.transcript-line {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: default;
+  border-radius: 4px;
+  margin: 0 4px;
+}
+
+.transcript-line:hover {
+  background: #fafafa;
+  transform: translateX(2px);
+}
+
+.transcript-line:last-child {
+  border-bottom: none;
+}
+
+.transcript-timestamp {
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  min-width: 45px;
+  width: 45px;
+  text-align: center;
+  transition: all 0.2s ease;
+  user-select: none;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.transcript-timestamp:hover {
+  background: #e0e0e0;
+  color: #ff0000;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.transcript-timestamp:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.transcript-text {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.5;
+  flex: 1;
+  padding-left: 0;
+}
+
+.transcript-controls-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.transcript-controls-container::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.05), transparent);
+  pointer-events: none;
+}
+
+.transcript-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.transcript-button:hover {
+  background: #f8f8f8;
+  border-color: #ccc;
+}
+
+.transcript-button.primary {
+  background: #ff0000;
+  border-color: #ff0000;
+  color: #fff;
+}
+
+.transcript-button.primary:hover {
+  background: #cc0000;
+  border-color: #cc0000;
+}
+
+.transcript-button svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+.transcript-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+#metube-transcript-content {
+  padding: 16px;
+}
+
+.transcript-floating-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.transcript-content-wrapper:hover .transcript-floating-controls {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.transcript-action-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.transcript-action-button:hover {
+  color: #ff0000;
+  transform: translateY(-1px);
+}
+
+.transcript-action-button:active {
+  transform: translateY(0);
+}
+
+.transcript-action-button svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.search-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.search-container {
+  padding: 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0;
+}
+
+.search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>');
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  padding-left: 36px;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #ff0000;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-counter {
+  padding: 0 8px;
+  color: #666;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.search-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-nav-button {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.search-nav-button:hover {
+  background: #f8f8f8;
+  border-color: #ccc;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-nav-button:active {
+  transform: translateY(1px);
+}
+
+.search-highlight {
+  background: #fff176;
+  padding: 2px 0;
+  border-radius: 2px;
+}
+
+.search-match {
+  background: #fafafa;
+}
+
+.settings-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23666" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  transition: all 0.2s ease;
+}
+
+.settings-select:focus {
+  outline: none;
+  border-color: #ff0000;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.1);
+}
+
+.settings-select:hover {
+  border-color: #d0d0d0;
+  background-color: #fafafa;
+}
+
+.settings-select option {
+  padding: 8px;
+  font-size: 14px;
+}
+
+.metube-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  z-index: 10000;
+  color: #ffffff;
+  font-size: 14px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Settings specific styles */
+.metube-settings-container {
+  padding: 24px;
+  max-width: 100%;
+  height: 100%;
+  background: #ffffff;
+}
+
+.settings-section {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.settings-section h3 {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #ff0000;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.1);
+}
+
+.settings-input::placeholder {
+  color: #999;
+}
+
+.settings-save-button {
+  padding: 10px 20px;
+  background: #ff0000;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settings-save-button:hover {
+  background: #cc0000;
+}
+
+/* Add resize handle styles */
+#metube-resize-handle {
+  position: absolute;
+  left: -8px;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  cursor: ew-resize;
+  background: transparent;
+  transition: all 0.2s ease;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#metube-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  width: 2px;
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+#metube-resize-handle:hover::before {
+  background: #ff0000;
+  height: 32px;
+}
+
+#metube-resize-handle.resizing::before {
+  background: #ff0000;
+  height: 40px;
+}
+
+#metube-resize-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  cursor: ew-resize;
+  background: transparent;
+}
+
+.metube-tabs {
+  display: flex;
+  padding: 0 4px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+}
+
+.metube-tab {
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.metube-tab:hover {
+  color: #333;
+}
+
+.metube-tab.active {
+  color: #ff0000;
+  font-weight: 500;
+}
+
+.metube-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ff0000;
+}
+
+/* Header improvements */
+.metube-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.metube-title {
+  font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.3px;
+}
+
+.metube-title-me {
+  color: #333;
+}
+
+.metube-title-tube {
+  color: #ff0000;
+}
+
+.metube-close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.metube-close-button:hover {
+  background: #f0f0f0;
+  color: #ff0000;
+  transform: translateY(-1px);
+}
+
+/* Add shadow to sidebar */
+#metube-sidebar-wrapper {
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Improve scrollbars */
+#metube-transcript-content::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#metube-transcript-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#metube-transcript-content::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+#metube-transcript-content::-webkit-scrollbar-thumb:hover {
+  background: #ccc;
+}
+
+/* Remove all timestamp control related styles */
+.timestamp-controls,
+.timestamp-toggle,
+.timestamp-frequency,
+.timestamp-select,
+.timestamp-select-wrapper,
+.timestamp-select-icon {
+  display: none;
+}
+
+.transcript-line:hover .transcript-timestamp {
+  background: #e8e8e8;
+}

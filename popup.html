@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            width: 320px;
+            margin: 0;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #333;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .logo img {
+            width: 24px;
+            height: 24px;
+            margin-right: 2px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-text-me {
+            color: #000000;
+        }
+
+        .logo-text-tube {
+            color: #FF0000;
+        }
+
+        .version {
+            color: #666;
+            font-size: 14px;
+            margin-left: 4px;
+        }
+
+        .status-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+        }
+
+        .button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .button svg {
+            width: 16px;
+            height: 16px;
+            color: #666;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .button-group .button {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .button-youtube {
+            background-color: #FF0000;
+            color: white;
+            border: none;
+        }
+
+        .button-youtube:hover {
+            background-color: #CC0000;
+        }
+
+        .button-youtube svg {
+            color: white;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin: 16px 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .inactive-notice {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            pointer-events: none;
+            animation: fadeIn 0.3s ease-in-out;
+            z-index: 1000;
+            width: 80%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .inactive-notice svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 8px;
+            color: #FF0000;
+        }
+
+        .content-wrapper {
+            position: relative;
+        }
+
+        .content-wrapper.inactive {
+            filter: blur(1px);
+        }
+
+        .content-wrapper.inactive:hover + .inactive-notice,
+        .content-wrapper.inactive:focus + .inactive-notice {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="icon-32.png" alt="MeTube Logo">
+            <div class="logo-text">
+                <span class="logo-text-me">Me</span><span class="logo-text-tube">Tube</span>
+            </div>
+            <span class="version">v1.0.00</span>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <ul class="status-list">
+            <li class="status-item">
+                <div class="status-indicator"></div>
+                <span>Transcript available</span>
+            </li>
+            <li class="status-item">
+                <div class="status-indicator"></div>
+                <span>AI chat enabled</span>
+            </li>
+        </ul>
+
+        <div class="section-title">Transcript Actions</div>
+        <div class="button-group">
+            <button class="button" id="copyTranscript">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                Copy
+            </button>
+            <button class="button" id="downloadTranscript">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Download
+            </button>
+        </div>
+
+        <div class="section-title">Controls</div>
+        <button class="button" id="toggleSidebar">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+            Toggle Sidebar
+        </button>
+
+        <button class="button" id="refreshTranscript">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            Refresh Transcript
+        </button>
+
+        <button class="button" id="openSettings">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            Open Settings
+        </button>
+    </div>
+
+    <div class="inactive-notice">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
+        Open a YouTube video to use MeTube features
+    </div>
+
+    <button class="button button-youtube" id="openYouTube">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg>
+        Open YouTube
+    </button>
+
+    <div class="footer">
+        <a href="#" id="documentation">Documentation</a>
+        <span>•</span>
+        <a href="#" id="reportIssue">Report Issue</a>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html> 
