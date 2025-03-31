@@ -1,4 +1,4 @@
-# MeTube 1.0.00
+# WeTube
 
 A powerful Chrome extension that enhances YouTube with a transcript viewer and AI assistant. This project is actively being improved with new features and optimizations.
 

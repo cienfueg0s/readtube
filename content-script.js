@@ -12,38 +12,113 @@
     autoFetch: true
   };
 
-  // Message handling from popup
+  // Message listener for popup and extension communication
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('MeTube: Received message:', request.action);
     switch (request.action) {
-      case 'checkTranscript':
-        const transcriptContent = document.getElementById('metube-transcript-content');
-        const hasTranscript = transcriptContent && 
-          transcriptContent.querySelector('.transcript-line') !== null;
-        sendResponse({ hasTranscript });
-        break;
-        
-      case 'toggleSidebar':
-        toggleSidebar();
-        sendResponse({ success: true });
-        break;
-        
-      case 'fetchTranscript':
-        fetchTranscript().then(() => {
-          chrome.runtime.sendMessage({ 
-            action: 'transcriptStatus', 
-            hasTranscript: true 
-          });
-        });
-        sendResponse({ success: true });
-        break;
-        
-      case 'showSettings':
-        showSettings();
-        sendResponse({ success: true });
-        break;
+        case 'isSidebarOpen':
+            const sidebar = document.getElementById('metube-sidebar');
+            sendResponse({ isOpen: sidebar && sidebar.style.right === '0px' });
+            break;
+
+        case 'toggleSidebar':
+            toggleSidebar();
+            if (request.openFromPopup) {
+                showTranscript(); // Ensure transcript tab is shown when opened from popup
+            }
+            sendResponse({ success: true });
+            break;
+
+        case 'getVideoInfo':
+            const titleElement = document.querySelector('h1.ytd-video-primary-info-renderer');
+            sendResponse({ 
+                title: titleElement ? titleElement.textContent.trim() : '',
+                videoId: new URLSearchParams(window.location.search).get('v')
+            });
+            break;
+
+        case 'getStatus':
+            sendResponse({
+                transcriptAvailable: window.hasTranscript || false,
+                aiEnabled: !!window.openaiApiKey
+            });
+            break;
+
+        case 'copyTranscriptToClipboard':
+            if (!window.videoTranscript) {
+                sendResponse({ success: false });
+                return;
+            }
+            
+            // Format transcript with timestamps
+            const formattedTranscript = window.videoTranscript.split('\n').map(line => {
+                const match = line.match(/\[(\d+:\d+)\] (.*)/);
+                if (match) {
+                    return `${match[1]} ${match[2]}`;
+                }
+                return line;
+            }).join('\n');
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(formattedTranscript)
+                .then(() => sendResponse({ success: true }))
+                .catch(err => {
+                    console.error('Failed to copy:', err);
+                    sendResponse({ success: false });
+                });
+            return true; // Keep connection open for async response
+
+        case 'downloadTranscript':
+            if (!window.videoTranscript) {
+                sendResponse({ success: false });
+                return;
+            }
+
+            try {
+                // Format transcript with timestamps
+                const formattedTranscript = window.videoTranscript.split('\n').map(line => {
+                    const match = line.match(/\[(\d+:\d+)\] (.*)/);
+                    if (match) {
+                        return `${match[1]} ${match[2]}`;
+                    }
+                    return line;
+                }).join('\n');
+
+                // Create and trigger download
+                const blob = new Blob([formattedTranscript], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const videoId = new URLSearchParams(window.location.search).get('v');
+                const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent.trim() || 'video';
+                const safeTitle = videoTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                
+                a.href = url;
+                a.download = `transcript_${safeTitle}_${videoId}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                sendResponse({ success: true });
+            } catch (err) {
+                console.error('Failed to download:', err);
+                sendResponse({ success: false });
+            }
+            break;
+
+        case 'refreshTranscript':
+            fetchTranscript().then(success => {
+                sendResponse({ success });
+            });
+            return true; // Keep connection open for async response
+
+        case 'showSettings':
+            showSettings();
+            if (request.openFromPopup) {
+                toggleSidebar(true); // Ensure sidebar is open when coming from popup
+            }
+            sendResponse({ success: true });
+            break;
     }
-    return true;
   });
 
   // Load settings from storage
@@ -66,19 +141,19 @@
       console.error('MeTube: Error loading settings:', error);
     }
   }
-
+  
   function toggleSidebar() {
     console.log('MeTube: Toggling sidebar');
     const sidebar = document.getElementById('metube-sidebar-wrapper');
     if (sidebar) {
-      const isHidden = sidebar.style.right === '-350px';
-      sidebar.style.right = isHidden ? '0' : '-350px';
+        const isHidden = sidebar.style.right === '-350px';
+        sidebar.style.right = isHidden ? '0' : '-350px';
       console.log('MeTube: Sidebar visibility:', isHidden ? 'shown' : 'hidden');
     } else {
       console.log('MeTube: Sidebar element not found');
     }
   }
-
+  
   // Basic initialization
   function initializeSidebar() {
     if (sidebarInitialized || !window.location.href.includes('youtube.com/watch')) {
@@ -234,7 +309,7 @@
 
     return chatContainer;
   }
-
+  
   function createSidebar() {
     const sidebarWrapper = document.createElement('div');
     sidebarWrapper.id = 'metube-sidebar-wrapper';
@@ -291,17 +366,17 @@
     
     transcriptTab.onclick = () => {
       updateActiveTab(transcriptTab);
-      showTranscript();
+        showTranscript();
     };
     
     aiChatTab.onclick = () => {
       updateActiveTab(aiChatTab);
-      showAIChat();
+        showAIChat();
     };
     
     settingsTab.onclick = () => {
       updateActiveTab(settingsTab);
-      showSettings();
+        showSettings();
     };
     
     function updateActiveTab(activeTab) {
@@ -367,7 +442,7 @@
       msg.style.color = textColor;
     });
   }
-
+  
   function showTranscript() {
     const mainContainer = document.getElementById('metube-main-container');
     if (mainContainer) {
@@ -377,20 +452,20 @@
         fetchTranscript();
     }
   }
-
+  
   function showAIChat() {
     const mainContainer = document.getElementById('metube-main-container');
     if (mainContainer) {
-      mainContainer.innerHTML = '';
-      mainContainer.appendChild(createChatInterface());
+        mainContainer.innerHTML = '';
+        mainContainer.appendChild(createChatInterface());
     }
   }
-
+  
   function showSettings() {
     const mainContainer = document.getElementById('metube-main-container');
     if (!mainContainer) return;
     
-    mainContainer.innerHTML = '';
+        mainContainer.innerHTML = '';
     
     const settingsContainer = document.createElement('div');
     settingsContainer.className = 'metube-settings-container';
@@ -452,37 +527,37 @@
     
     settingsContainer.appendChild(aiSection);
     mainContainer.appendChild(settingsContainer);
-  }
+}
 
-  function handleSendMessage() {
+function handleSendMessage() {
     const textarea = document.getElementById('metube-chat-input');
-    const message = textarea.value.trim();
-    if (!message) return;
+  const message = textarea.value.trim();
+  if (!message) return;
 
-    // Add user message to chat
-    addMessageToChat(message, 'user');
-    textarea.value = '';
+  // Add user message to chat
+  addMessageToChat(message, 'user');
+  textarea.value = '';
 
-    // Send to OpenAI
-    sendToOpenAI(message);
-  }
+  // Send to OpenAI
+  sendToOpenAI(message);
+}
 
-  function addMessageToChat(message, type) {
+function addMessageToChat(message, type) {
     const messagesContainer = document.getElementById('metube-messages');
-    const messageDiv = document.createElement('div');
+  const messageDiv = document.createElement('div');
     messageDiv.className = `metube-message metube-${type}-message`;
-    messageDiv.textContent = message;
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  }
+  messageDiv.textContent = message;
+  messagesContainer.appendChild(messageDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
-  async function sendToOpenAI(message) {
-    try {
-        const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
-        if (!openaiApiKey) {
+async function sendToOpenAI(message) {
+  try {
+    const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+    if (!openaiApiKey) {
             addMessageToChat('⚠️ Please add your OpenAI API key in the Settings tab first.', 'system');
-            return;
-        }
+        return;
+      }
 
         // Remove previous loading message if exists
         const messagesContainer = document.getElementById('metube-messages');
@@ -490,8 +565,8 @@
         if (loadingMessage?.textContent === 'Loading...') {
             messagesContainer.removeChild(loadingMessage);
         }
-        
-        addMessageToChat('Loading...', 'system');
+      
+    addMessageToChat('Loading...', 'system');
 
         // Prepare the messages array with better context
         const messages = [
@@ -563,18 +638,18 @@
             const currentModel = models[modelIndex];
             try {
                 response = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${openaiApiKey}`
-                    },
-                    body: JSON.stringify({
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      },
+      body: JSON.stringify({
                         model: currentModel,
                         messages: messages,
                         temperature: 0.7,
                         max_tokens: 1000
-                    })
-                });
+      })
+    });
 
                 if (response.ok) {
                     success = true;
@@ -608,17 +683,17 @@
 
         if (!success) {
             throw new Error('All available models failed to process the request. The transcript may be too long for your available models.');
-        }
+    }
 
-        const data = await response.json();
+    const data = await response.json();
         if (!data.choices?.[0]?.message?.content) {
             throw new Error('Invalid response format from API');
         }
+    
+    // Add AI response
+    addMessageToChat(data.choices[0].message.content, 'ai');
         
-        // Add AI response
-        addMessageToChat(data.choices[0].message.content, 'ai');
-        
-    } catch (error) {
+  } catch (error) {
         console.error('Chat error:', error);
         addMessageToChat(`❌ Error: ${error.message}. Please try again.`, 'system');
     }
@@ -645,7 +720,7 @@
   }
 
   // Add the transcript-related functions
-  async function fetchTranscript() {
+async function fetchTranscript() {
     const transcriptContent = document.getElementById('metube-transcript-content');
     if (!transcriptContent) return;
 
@@ -653,67 +728,74 @@
     transcriptContent.innerHTML = '<div style="padding: 20px; text-align: center;">Loading transcript...</div>';
 
     try {
-      // Get video ID from URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const videoId = urlParams.get('v');
-      if (!videoId) throw new Error('Could not find video ID');
+        // Get video ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoId = urlParams.get('v');
+        if (!videoId) throw new Error('Could not find video ID');
 
-      // Try to get the ytInitialData from the page
-      const ytInitialData = window.ytInitialData || {};
-      const playerResponse = window.ytInitialPlayerResponse || {};
-      
-      // Log data for debugging
-      console.log('Attempting to fetch transcript for video:', videoId);
-      
-      // Try to get captions from player response
-      const captions = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-      if (!captions || captions.length === 0) {
-        // Try alternative method using page source
-        const pageSource = document.documentElement.innerHTML;
-        const captionsMatch = pageSource.match(/"captionTracks":\[(.*?)\]/);
+        // Try to get the ytInitialData from the page
+        const ytInitialData = window.ytInitialData || {};
+        const playerResponse = window.ytInitialPlayerResponse || {};
         
-        if (!captionsMatch) {
-          throw new Error('No captions data found in page source');
-        }
+        // Log data for debugging
+        console.log('Attempting to fetch transcript for video:', videoId);
         
-        try {
-          const captionsData = JSON.parse(`[${captionsMatch[1]}]`);
-          if (captionsData.length > 0) {
-            // Get the first available transcript URL
-            const transcriptUrl = captionsData[0].baseUrl;
+        // Try to get captions from player response
+        const captions = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+        if (!captions || captions.length === 0) {
+            // Try alternative method using page source
+            const pageSource = document.documentElement.innerHTML;
+            const captionsMatch = pageSource.match(/"captionTracks":\[(.*?)\]/);
+            
+            if (!captionsMatch) {
+                throw new Error('No captions data found in page source');
+            }
+            
+            try {
+                const captionsData = JSON.parse(`[${captionsMatch[1]}]`);
+                if (captionsData.length > 0) {
+                    // Get the first available transcript URL
+                    const transcriptUrl = captionsData[0].baseUrl;
+                    await fetchAndDisplayTranscript(transcriptUrl, transcriptContent);
+                    return;
+                }
+            } catch (parseError) {
+                console.error('Error parsing captions data:', parseError);
+            }
+                          } else {
+            // Use captions from player response
+            const transcriptUrl = captions[0].baseUrl;
             await fetchAndDisplayTranscript(transcriptUrl, transcriptContent);
             return;
-          }
-        } catch (parseError) {
-          console.error('Error parsing captions data:', parseError);
         }
-      } else {
-        // Use captions from player response
-        const transcriptUrl = captions[0].baseUrl;
-        await fetchAndDisplayTranscript(transcriptUrl, transcriptContent);
-        return;
-      }
 
-      throw new Error('Could not find caption data');
+        throw new Error('Could not find caption data');
 
     } catch (error) {
-      console.error('Transcript error:', error);
-      transcriptContent.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #666;">
-          ${error.message}
-          <br><br>
-          <small>Debug info: Check console for details</small>
-        </div>
-      `;
+        console.error('Transcript error:', error);
+        transcriptContent.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #666;">
+                ${error.message}
+                <br><br>
+                <small>Debug info: Check console for details</small>
+            </div>
+        `;
     }
-  }
+}
 
   function createTranscriptDisplay() {
     const container = document.createElement('div');
     container.className = 'metube-transcript-container';
     
-    const controlsContainer = document.createElement('div');
-    controlsContainer.className = 'transcript-controls-container';
+    // Add title section
+    const titleElement = document.createElement('div');
+    titleElement.className = 'transcript-title';
+    const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer');
+    titleElement.textContent = videoTitle ? videoTitle.textContent.trim() : 'Video Transcript';
+    container.appendChild(titleElement);
+    
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'search-container';
     
     const searchWrapper = document.createElement('div');
     searchWrapper.className = 'search-wrapper';
@@ -726,6 +808,9 @@
     
     const searchNav = document.createElement('div');
     searchNav.className = 'search-nav';
+    
+    const navButtons = document.createElement('div');
+    navButtons.className = 'search-nav-buttons';
     
     const prevButton = document.createElement('button');
     prevButton.className = 'search-nav-button';
@@ -741,14 +826,17 @@
     searchCounter.id = 'search-counter';
     searchCounter.className = 'search-counter';
     
-    searchNav.appendChild(prevButton);
+    navButtons.appendChild(prevButton);
+    navButtons.appendChild(nextButton);
+    
+    searchNav.appendChild(navButtons);
     searchNav.appendChild(searchCounter);
-    searchNav.appendChild(nextButton);
     
     searchWrapper.appendChild(searchInput);
     searchWrapper.appendChild(searchNav);
     
-    controlsContainer.appendChild(searchWrapper);
+    searchContainer.appendChild(searchWrapper);
+    container.appendChild(searchContainer);
     
     const contentWrapper = document.createElement('div');
     contentWrapper.className = 'transcript-content-wrapper';
@@ -766,8 +854,31 @@
         <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
       </svg>
     `;
+    
+    const downloadButton = document.createElement('button');
+    downloadButton.className = 'transcript-action-button';
+    downloadButton.title = 'Download transcript';
+    downloadButton.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+    `;
+    
+    floatingControls.appendChild(copyButton);
+    floatingControls.appendChild(downloadButton);
+    
+    const transcriptContent = document.createElement('div');
+    transcriptContent.id = 'metube-transcript-content';
+    
+    contentWrapper.appendChild(floatingControls);
+    contentWrapper.appendChild(transcriptContent);
+    container.appendChild(contentWrapper);
+    
+    // Add click handlers
     copyButton.onclick = () => {
-      const transcriptText = Array.from(document.querySelectorAll('.transcript-line'))
+      const transcriptText = Array.from(transcriptContent.querySelectorAll('.transcript-line'))
         .map(line => {
           const timestamp = line.querySelector('.transcript-timestamp').textContent;
           const text = line.querySelector('.transcript-text').textContent;
@@ -781,6 +892,7 @@
             <path d="M20 6L9 17l-5-5"/>
           </svg>
         `;
+        showActionNotification('Transcript copied to clipboard');
         setTimeout(() => {
           copyButton.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -792,18 +904,8 @@
       });
     };
     
-    const downloadButton = document.createElement('button');
-    downloadButton.className = 'transcript-action-button';
-    downloadButton.title = 'Download transcript';
-    downloadButton.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-      </svg>
-    `;
     downloadButton.onclick = () => {
-      const transcriptText = Array.from(document.querySelectorAll('.transcript-line'))
+      const transcriptText = Array.from(transcriptContent.querySelectorAll('.transcript-line'))
         .map(line => {
           const timestamp = line.querySelector('.transcript-timestamp').textContent;
           const text = line.querySelector('.transcript-text').textContent;
@@ -811,11 +913,15 @@
         })
         .join('\n');
       
+      const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer')?.textContent.trim() || 'video';
+      const videoId = new URLSearchParams(window.location.search).get('v') || 'unknown';
+      const safeTitle = videoTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      
       const blob = new Blob([transcriptText], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'transcript.txt';
+      a.download = `${safeTitle}_transcript.txt`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -826,6 +932,7 @@
           <path d="M20 6L9 17l-5-5"/>
         </svg>
       `;
+      showActionNotification('Transcript downloaded');
       setTimeout(() => {
         downloadButton.innerHTML = `
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -837,54 +944,42 @@
       }, 2000);
     };
     
-    floatingControls.appendChild(copyButton);
-    floatingControls.appendChild(downloadButton);
-    contentWrapper.appendChild(floatingControls);
-    
-    const transcriptContent = document.createElement('div');
-    transcriptContent.id = 'metube-transcript-content';
-    
-    contentWrapper.appendChild(transcriptContent);
-    
-    container.appendChild(controlsContainer);
-    container.appendChild(contentWrapper);
-    
     return container;
-  }
+}
 
-  function searchTranscript(query) {
+function searchTranscript(query) {
     const content = document.getElementById('metube-transcript-content');
     const searchCounter = document.getElementById('search-counter');
     if (!content) return;
     
     if (!query) {
-      // Reset search
-      content.querySelectorAll('.transcript-line').forEach(line => {
-        const text = line.querySelector('.transcript-text');
-        if (text) text.innerHTML = text.textContent;
+        // Reset search
+        content.querySelectorAll('.transcript-line').forEach(line => {
+            const text = line.querySelector('.transcript-text');
+            if (text) text.innerHTML = text.textContent;
         line.classList.remove('search-match');
-      });
+        });
       if (searchCounter) searchCounter.textContent = '';
-      return;
-    }
-    
+        return;
+      }
+      
     let matchCount = 0;
     let currentMatch = 0;
     const matches = [];
     
     content.querySelectorAll('.transcript-line').forEach(line => {
-      const text = line.querySelector('.transcript-text');
-      if (!text) return;
-      
-      const originalText = text.textContent;
-      const regex = new RegExp(query, 'gi');
+        const text = line.querySelector('.transcript-text');
+        if (!text) return;
+        
+        const originalText = text.textContent;
+        const regex = new RegExp(query, 'gi');
       const matches = originalText.match(regex);
       
       if (matches) {
         matchCount += matches.length;
         line.classList.add('search-match');
         text.innerHTML = originalText.replace(regex, match => 
-          `<span class="search-highlight">${match}</span>`
+            `<span class="search-highlight">${match}</span>`
         );
       } else {
         line.classList.remove('search-match');
@@ -1038,6 +1133,41 @@
       return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Add notification function at the top level
+  function showActionNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.bottom = '24px';
+    notification.style.left = '50%';
+    notification.style.transform = 'translateX(-50%)';
+    notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    notification.style.color = '#fff';
+    notification.style.padding = '8px 16px';
+    notification.style.borderRadius = '4px';
+    notification.style.fontSize = '14px';
+    notification.style.zIndex = '10000';
+    notification.style.animation = 'fadeInOut 2s ease-in-out';
+    notification.textContent = message;
+
+    // Add the animation keyframes
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, 20px); }
+        15% { opacity: 1; transform: translate(-50%, 0); }
+        85% { opacity: 1; transform: translate(-50%, 0); }
+        100% { opacity: 0; transform: translate(-50%, -20px); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.remove();
+      style.remove();
+    }, 2000);
   }
 
 })();
