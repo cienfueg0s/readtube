@@ -584,7 +584,7 @@
         // Add arrow icon
         buttonElement.innerHTML += `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 8px;">
-                <path d="M9 18l6-6-6-6"/>
+                <path d="M9 18l-7-7 7-7"/>
             </svg>
         `;
         
@@ -1400,162 +1400,70 @@ function searchTranscript(query) {
     const searchCounter = document.getElementById('search-counter');
     if (!content) return;
     
-    // Reset all previous highlights
-    content.querySelectorAll('.transcript-line').forEach(line => {
-        const text = line.querySelector('.transcript-text');
-        if (text) {
-            text.innerHTML = text.textContent;
-            line.classList.remove('search-match', 'current-match');
-        }
-    });
-    
+    // Clear previous highlights if query is empty
     if (!query) {
+        content.querySelectorAll('.transcript-line').forEach(line => {
+            const text = line.querySelector('.transcript-text');
+            if (text) {
+                text.innerHTML = text.textContent;
+                line.classList.remove('search-match', 'current-match');
+            }
+        });
         if (searchCounter) searchCounter.textContent = '';
         return;
     }
-    
-    try {
-        const regex = new RegExp(query, 'gi');
-        let totalMatches = 0;
-        const matches = [];
-        
-        // First pass: Count matches and store their positions
-        content.querySelectorAll('.transcript-line').forEach((line, lineIndex) => {
-            const text = line.querySelector('.transcript-text');
-            if (!text) return;
-            
-            const content = text.textContent;
-            const lineMatches = [...content.matchAll(regex)];
-            
-            if (lineMatches.length > 0) {
-                line.classList.add('search-match');
-                matches.push({
-                    line: line,
-                    text: text,
-                    matches: lineMatches
-                });
-                totalMatches += lineMatches.length;
-            }
-        });
-        
-        // Update counter
-        if (searchCounter) {
-            searchCounter.textContent = totalMatches > 0 ? 
-                `1 of ${totalMatches} matches` : 
-                'No matches found';
-        }
-        
-        // Second pass: Apply highlighting
-        matches.forEach(({ line, text, matches }) => {
-            let html = text.textContent;
-            let offset = 0;
-            
-            matches.forEach(match => {
-                const before = html.substring(0, match.index + offset);
-                const highlighted = html.substring(match.index + offset, match.index + match.length + offset);
-                const after = html.substring(match.index + match.length + offset);
-                
-                html = `${before}<span class="search-highlight" style="background-color: #ffeb3b; color: #000;">${highlighted}</span>${after}`;
-                offset += '<span class="search-highlight" style="background-color: #ffeb3b; color: #000;">'.length + '</span>'.length;
-            });
-            
-            text.innerHTML = html;
-        });
-        
-        // Scroll to first match if exists
-        if (matches.length > 0) {
-            matches[0].line.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            matches[0].line.classList.add('current-match');
-        }
-        
-    } catch (error) {
-        console.error('Search error:', error);
-        if (searchCounter) {
-            searchCounter.textContent = 'Invalid search pattern';
-        }
-    }
-}
 
-// Update navigation function
-function navigateSearch(direction) {
-    const content = document.getElementById('readtube-transcript-content');
-    const searchCounter = document.getElementById('search-counter');
-    if (!content || !searchCounter) return;
-    
-    const matches = Array.from(content.querySelectorAll('.search-match'));
-    if (matches.length === 0) return;
-    
-    // Find current match
-    const currentMatch = content.querySelector('.current-match');
-    const currentIndex = currentMatch ? matches.indexOf(currentMatch) : -1;
-    
-    // Remove current match highlight
-    if (currentMatch) {
-        currentMatch.classList.remove('current-match');
-    }
-    
-    // Calculate next index
-    let nextIndex;
-    if (direction === 'next') {
-        nextIndex = currentIndex < matches.length - 1 ? currentIndex + 1 : 0;
-    } else {
-        nextIndex = currentIndex > 0 ? currentIndex - 1 : matches.length - 1;
-    }
-    
-    // Apply new current match
-    matches[nextIndex].classList.add('current-match');
-    matches[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    query = query.toLowerCase();
+    let totalMatches = 0;
+    let firstMatch = null;
+
+    content.querySelectorAll('.transcript-line').forEach(line => {
+        const text = line.querySelector('.transcript-text');
+        if (!text) return;
+
+        const content = text.textContent;
+        const lowerContent = content.toLowerCase();
+        
+        // Reset line state
+        line.classList.remove('search-match', 'current-match');
+        
+        if (lowerContent.includes(query)) {
+            line.classList.add('search-match');
+            totalMatches++;
+            
+            if (!firstMatch) {
+                firstMatch = line;
+                line.classList.add('current-match');
+            }
+            
+            // Simple text highlight
+            const parts = content.split(new RegExp(`(${query})`, 'gi'));
+            text.innerHTML = parts.map(part => 
+                part.toLowerCase() === query.toLowerCase() 
+                    ? `<span class="search-highlight">${part}</span>` 
+                    : part
+            ).join('');
+        } else {
+            text.innerHTML = content;
+        }
+    });
     
     // Update counter
-    const totalMatches = matches.length;
-    searchCounter.textContent = `${nextIndex + 1} of ${totalMatches} matches`;
+    if (searchCounter) {
+        searchCounter.innerHTML = totalMatches > 0 
+            ? `1 of ${totalMatches} matches` 
+            : 'No matches found';
+    }
+    
+    // Scroll to first match
+    if (firstMatch) {
+        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 }
 
-// Add these styles to the document
-const style = document.createElement('style');
-style.textContent = `
-    .transcript-line {
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-        line-height: 1.5;
-    }
-    
-    .transcript-timestamp {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 13px;
-        color: #666;
-        padding: 2px 6px;
-        background: rgba(0, 0, 0, 0.03);
-        border-radius: 4px;
-        cursor: pointer;
-        user-select: none;
-        white-space: nowrap;
-        transition: all 0.2s ease;
-    }
-    
-    .transcript-timestamp:hover {
-        background: rgba(0, 0, 0, 0.06);
-        color: #333;
-    }
-    
-    .transcript-text {
-        flex: 1;
-        font-size: 14px;
-        color: #333;
-        line-height: 1.5;
-    }
-    
-    .search-match {
-        background: transparent;
-    }
-    
-    .current-match {
-        background: rgba(255, 235, 59, 0.1) !important;
-    }
-    
+// Update the styles for better visibility
+const searchStyles = document.createElement('style');
+searchStyles.textContent = `
     .search-highlight {
         background-color: rgba(255, 235, 59, 0.3);
         border-radius: 2px;
@@ -1563,35 +1471,22 @@ style.textContent = `
         margin: 0 -2px;
     }
     
-    @keyframes pulse {
-        0% { background-color: rgba(255, 235, 59, 0.1); }
-        50% { background-color: rgba(255, 235, 59, 0.2); }
-        100% { background-color: rgba(255, 235, 59, 0.1); }
+    .search-match {
+        background: transparent;
     }
     
     .current-match {
-        animation: pulse 2s infinite;
+        background: rgba(255, 235, 59, 0.1);
+        border-radius: 4px;
+        padding: 4px 0;
+        margin: -4px 0;
     }
     
-    .search-nav-button:hover {
-        background: #f8f9fa !important;
-    }
-    
-    .search-nav-button:active {
-        background: #f0f0f0 !important;
-    }
-    
-    .transcript-action-button:hover {
-        background: #f8f9fa !important;
-        transform: translateY(-1px);
-    }
-    
-    .transcript-action-button:active {
-        background: #f0f0f0 !important;
-        transform: translateY(0);
+    .current-match .search-highlight {
+        background-color: rgba(255, 235, 59, 0.5);
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(searchStyles);
 
 function showAskInterface() {
     const mainContainer = document.getElementById('readtube-main-container');
@@ -1727,5 +1622,84 @@ function getVideoId() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('v');
 }
+
+function navigateSearch(direction) {
+    const content = document.getElementById('readtube-transcript-content');
+    const searchCounter = document.getElementById('search-counter');
+    if (!content || !searchCounter) return;
+
+    const matches = Array.from(content.querySelectorAll('.search-match'));
+    if (matches.length === 0) return;
+
+    // Find current match
+    const currentMatch = content.querySelector('.current-match');
+    const currentIndex = currentMatch ? matches.indexOf(currentMatch) : -1;
+
+    // Remove current match highlight
+    if (currentMatch) {
+        currentMatch.classList.remove('current-match');
+    }
+
+    // Calculate next index with wraparound
+    let nextIndex;
+    if (direction === 'next') {
+        nextIndex = currentIndex < matches.length - 1 ? currentIndex + 1 : 0;
+    } else {
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : matches.length - 1;
+    }
+
+    // Apply new current match
+    const nextMatch = matches[nextIndex];
+    nextMatch.classList.add('current-match');
+    
+    // Smooth scroll with offset for better visibility
+    nextMatch.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+    });
+
+    // Update counter with current position
+    searchCounter.innerHTML = `${nextIndex + 1} of ${matches.length} matches`;
+
+    // Add a brief highlight animation
+    const highlight = nextMatch.querySelector('.search-highlight');
+    if (highlight) {
+        highlight.style.animation = 'none';
+        highlight.offsetHeight; // Trigger reflow
+        highlight.style.animation = 'highlightFade 0.3s ease-out';
+    }
+}
+
+// Add these styles for improved search navigation
+const navStyles = document.createElement('style');
+navStyles.textContent = `
+    .search-nav-button {
+        opacity: 0.8;
+        transition: all 0.2s ease;
+    }
+
+    .search-nav-button:hover {
+        opacity: 1;
+        background: #f0f0f0 !important;
+    }
+
+    .search-nav-button:active {
+        transform: scale(0.95);
+    }
+
+    .current-match {
+        background: rgba(255, 235, 59, 0.2) !important;
+    }
+
+    .current-match .search-highlight {
+        background: rgba(255, 235, 59, 0.4) !important;
+    }
+
+    @keyframes highlightFade {
+        0% { background: rgba(255, 235, 59, 0.6); }
+        100% { background: rgba(255, 235, 59, 0.4); }
+    }
+`;
+document.head.appendChild(navStyles);
 
 })();
