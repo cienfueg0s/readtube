@@ -145,14 +145,34 @@
   function toggleSidebar(forceOpen) {
     console.log('ReadTube: Toggling sidebar');
     const sidebar = document.getElementById('readtube-sidebar-wrapper');
+    let reopenTab = document.querySelector('.readtube-reopen-tab');
+    
+    if (!reopenTab) {
+        reopenTab = document.createElement('div');
+        reopenTab.className = 'readtube-reopen-tab';
+        reopenTab.innerHTML = `
+            <div class="readtube-reopen-tab-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </div>
+            <div class="readtube-reopen-tab-text">ReadTube</div>
+        `;
+        reopenTab.addEventListener('click', () => toggleSidebar(true));
+        document.body.appendChild(reopenTab);
+    }
+
     if (sidebar) {
         const isHidden = sidebar.style.right === '-350px';
         if (forceOpen === true) {
             sidebar.style.right = '0';
+            reopenTab.style.display = 'none';
         } else if (forceOpen === false) {
             sidebar.style.right = '-350px';
+            reopenTab.style.display = 'flex';
         } else {
             sidebar.style.right = isHidden ? '0' : '-350px';
+            reopenTab.style.display = isHidden ? 'none' : 'flex';
         }
         console.log('ReadTube: Sidebar visibility:', sidebar.style.right === '0' ? 'shown' : 'hidden');
     } else {

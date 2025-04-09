@@ -1,98 +1,121 @@
 .readtube-chat-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   padding: 16px;
   gap: 16px;
   background: #ffffff;
+  overflow: visible;
 }
 
 .readtube-messages {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  background: #f8f8f8;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
+  padding: 0 16px;
+  background: #ffffff;
+  overflow: visible;
 }
 
 .readtube-message {
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  max-width: 82%;
+  line-height: 1.6;
+  font-size: 15px;
+  transition: transform 0.2s ease;
+  position: relative;
+}
+
+.readtube-message:last-child {
   margin-bottom: 16px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  max-width: 85%;
-  line-height: 1.5;
+}
+
+.readtube-message:hover {
+  transform: translateY(-1px);
 }
 
 .readtube-system-message {
   background: #f8f9fa;
-  color: #333;
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 95%;
+  color: #4a4a4a;
+  margin: 24px auto;
+  max-width: 90%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 16px 24px;
+  text-align: center;
+  font-size: 14px;
 }
 
 .readtube-user-message {
   background: #e3f2fd;
   margin-left: auto;
   color: #1565c0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-bottom-right-radius: 4px;
 }
 
 .readtube-ai-message {
-  background: #f5f5f5;
+  background: #ffffff;
   margin-right: auto;
-  color: #333;
+  color: #1a1a1a;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-bottom-left-radius: 4px;
 }
 
 .readtube-input-container {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   padding: 16px;
   background: #ffffff;
-  border-top: 1px solid #eee;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0 0 12px 12px;
 }
 
 .readtube-chat-input {
   flex: 1;
-  min-height: 40px;
+  min-height: 44px;
   max-height: 120px;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
   resize: none;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
+  transition: all 0.2s ease;
 }
 
 .readtube-chat-input:focus {
   outline: none;
   border-color: #ff0000;
-  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1);
 }
 
 .readtube-send-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   background: #ff0000;
   color: white;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 0, 0, 0.2);
 }
 
 .readtube-send-button:hover {
   background: #cc0000;
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
 }
 
 .readtube-send-button:active {
   transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(255, 0, 0, 0.2);
 }
 
 /* Transcript styles */
@@ -102,28 +125,26 @@
   flex-direction: column;
   gap: 16px;
   background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .transcript-line {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: flex-start;
   gap: 12px;
   transition: all 0.2s ease;
   position: relative;
   cursor: default;
-  border-radius: 4px;
+  border-radius: 8px;
   margin: 0 4px;
 }
 
 .transcript-line:hover {
-  background: #fafafa;
-  transform: translateX(2px);
-}
-
-.transcript-line:last-child {
-  border-bottom: none;
+  background: #f8f9fa;
+  transform: translateX(4px);
 }
 
 .transcript-timestamp {
@@ -131,9 +152,9 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
   background: #f0f0f0;
-  border-radius: 4px;
+  border-radius: 8px;
   min-width: 45px;
   width: 45px;
   text-align: center;
@@ -142,25 +163,20 @@
   flex-shrink: 0;
   position: relative;
   z-index: 2;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .transcript-timestamp:hover {
   background: #e0e0e0;
   color: #ff0000;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.transcript-timestamp:active {
-  transform: translateY(0);
-  box-shadow: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .transcript-text {
-  color: #333;
-  font-size: 14px;
-  line-height: 1.5;
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.6;
   flex: 1;
   padding-left: 0;
 }
@@ -170,37 +186,31 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border-bottom: 1px solid #eee;
-}
-
-.transcript-controls-container::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  height: 8px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.05), transparent);
-  pointer-events: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
 }
 
 .transcript-button {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fff;
-  color: #333;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1a1a1a;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .transcript-button:hover {
   background: #f8f8f8;
-  border-color: #ccc;
+  border-color: rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .transcript-button.primary {
@@ -212,13 +222,6 @@
 .transcript-button.primary:hover {
   background: #cc0000;
   border-color: #cc0000;
-}
-
-.transcript-button svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 2;
-  flex-shrink: 0;
 }
 
 .transcript-content-wrapper {
@@ -628,7 +631,33 @@
 
 /* Add shadow to sidebar */
 #readtube-sidebar-wrapper {
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
+  width: 340px !important;
+  max-width: 90vw;
+  background: #ffffff;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  border-radius: 0;
+}
+
+/* Custom scrollbar styling */
+#readtube-sidebar-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#readtube-sidebar-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#readtube-sidebar-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+#readtube-sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* Improve scrollbars */
@@ -665,24 +694,97 @@
   background: #e8e8e8;
 }
 
+.quick-question-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0 16px 48px;
+  background: transparent;
+}
+
 .quick-question-button {
-  padding: 8px 12px;
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 20px;
-  font-size: 13px;
-  color: #333;
+  padding: 14px 20px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  font-size: 15px;
+  color: #1a1a1a;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  text-align: left;
+  font-weight: 400;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
 }
 
 .quick-question-button:hover {
-  background: #e8e8e8;
-  border-color: #d0d0d0;
+  background: #f8f8f8;
+  border-color: rgba(0, 0, 0, 0.12);
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .quick-question-button:active {
   transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Welcome message styling */
+.readtube-system-message.welcome {
+  background: #ffffff;
+  margin: 0 0 32px 0;
+  padding: 28px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.6;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.readtube-reopen-tab {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ffffff;
+  padding: 12px 8px;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 9997;
+}
+
+.readtube-reopen-tab:hover {
+  background: #f8f8f8;
+  padding-right: 12px;
+}
+
+.readtube-reopen-tab-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff0000;
+}
+
+.readtube-reopen-tab-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }

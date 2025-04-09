@@ -4,66 +4,96 @@
     <meta charset="UTF-8">
     <style>
         body {
-            width: 320px;
+            width: 360px;
             margin: 0;
-            padding: 16px;
+            padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #333;
+            color: #1a1a1a;
+            background: #ffffff;
         }
 
         .header {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .logo img {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
+            transition: transform 0.2s ease;
+        }
+
+        .logo:hover img {
+            transform: scale(1.1);
         }
 
         .logo-text {
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             display: flex;
             align-items: center;
+            letter-spacing: -0.5px;
         }
 
         .logo-text-we {
-            color: #000000;
+            color: #1a1a1a;
         }
 
         .logo-text-tube {
             color: #FF0000;
+            position: relative;
+        }
+
+        .logo-text-tube::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #FF0000;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover .logo-text-tube::after {
+            transform: scaleX(1);
         }
 
         .instructions {
             line-height: 1.6;
-            font-size: 14px;
-            color: #444;
+            font-size: 15px;
+            color: #4a4a4a;
+            margin-bottom: 24px;
         }
 
         .step {
-            margin-bottom: 16px;
-            padding-left: 24px;
+            margin-bottom: 20px;
+            padding-left: 28px;
             position: relative;
+            transition: transform 0.2s ease;
+        }
+
+        .step:hover {
+            transform: translateX(4px);
         }
 
         .step::before {
             content: attr(data-number);
             position: absolute;
             left: 0;
-            width: 18px;
-            height: 18px;
-            background: #ff0000;
+            width: 20px;
+            height: 20px;
+            background: #FF0000;
             color: white;
             border-radius: 50%;
             display: flex;
@@ -71,13 +101,28 @@
             justify-content: center;
             font-size: 12px;
             font-weight: bold;
+            box-shadow: 0 2px 4px rgba(255, 0, 0, 0.2);
+        }
+
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .feature {
-            background: #f8f8f8;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 20px;
+            background: #ffffff;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feature:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 0, 0, 0.2);
         }
 
         .feature-title {
@@ -85,7 +130,15 @@
             margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            font-size: 16px;
+            color: #1a1a1a;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -111,25 +164,33 @@
         </div>
     </div>
 
-    <div class="feature">
-        <div class="feature-title">
-            <span>💬 Ask AI</span>
+    <div class="features">
+        <div class="feature">
+            <div class="feature-title">
+                <span>💬 Ask AI</span>
+            </div>
+            <div class="feature-description">
+                Have a natural conversation about the video content with our AI assistant
+            </div>
         </div>
-        Have a natural conversation about the video content
-    </div>
 
-    <div class="feature">
-        <div class="feature-title">
-            <span>✨ Insights</span>
+        <div class="feature">
+            <div class="feature-title">
+                <span>✨ Insights</span>
+            </div>
+            <div class="feature-description">
+                Get quick analysis, summaries, and key moments from the video
+            </div>
         </div>
-        Get quick analysis, summaries, and key moments
-    </div>
 
-    <div class="feature">
-        <div class="feature-title">
-            <span>📝 Transcript</span>
+        <div class="feature">
+            <div class="feature-title">
+                <span>📝 Transcript</span>
+            </div>
+            <div class="feature-description">
+                Search and navigate through the video transcript with ease
+            </div>
         </div>
-        Search and navigate through the video transcript
     </div>
 </body>
 </html> 
