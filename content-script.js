@@ -7,7 +7,7 @@
   let currentSettings = {
     darkMode: false,
     fontSize: 14,
-    sidebarWidth: 350,
+    sidebarWidth: 385,
     sidebarHeight: 70,
     autoFetch: true
   };
@@ -129,7 +129,7 @@
       currentSettings = {
         darkMode: settings.darkMode ?? false,
         fontSize: settings.fontSize ?? 14,
-        sidebarWidth: settings.sidebarWidth ?? 350,
+        sidebarWidth: settings.sidebarWidth ?? 385,
         sidebarHeight: settings.sidebarHeight ?? 70,
         autoFetch: settings.autoFetch ?? true
       };
@@ -151,27 +151,25 @@
         reopenTab = document.createElement('div');
         reopenTab.className = 'readtube-reopen-tab';
         reopenTab.innerHTML = `
-            <div class="readtube-reopen-tab-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
+            <div class="readtube-reopen-tab-content">
+                <img src="${chrome.runtime.getURL('icon-32.png')}" alt="ReadTube" style="width: 20px; height: 20px;">
+                <div class="readtube-reopen-tab-text">ReadTube</div>
             </div>
-            <div class="readtube-reopen-tab-text">ReadTube</div>
         `;
         reopenTab.addEventListener('click', () => toggleSidebar(true));
         document.body.appendChild(reopenTab);
     }
 
     if (sidebar) {
-        const isHidden = sidebar.style.right === '-350px';
+        const isHidden = sidebar.style.right === '-385px';
         if (forceOpen === true) {
             sidebar.style.right = '0';
             reopenTab.style.display = 'none';
         } else if (forceOpen === false) {
-            sidebar.style.right = '-350px';
+            sidebar.style.right = '-385px';
             reopenTab.style.display = 'flex';
         } else {
-            sidebar.style.right = isHidden ? '0' : '-350px';
+            sidebar.style.right = isHidden ? '0' : '-385px';
             reopenTab.style.display = isHidden ? 'none' : 'flex';
         }
         console.log('ReadTube: Sidebar visibility:', sidebar.style.right === '0' ? 'shown' : 'hidden');
@@ -353,7 +351,7 @@
     sidebarWrapper.style.top = '60px';
     sidebarWrapper.style.right = '0'; // Start visible
     sidebarWrapper.style.height = 'calc(100vh - 60px)';
-    sidebarWrapper.style.width = '350px';
+    sidebarWrapper.style.width = '385px';
     sidebarWrapper.style.transition = 'right 0.3s ease';
     sidebarWrapper.style.zIndex = '9999';
 
@@ -374,7 +372,10 @@
     
     const title = document.createElement('div');
     title.className = 'readtube-title';
-    title.innerHTML = '<span class="readtube-title-me">Read</span><span class="readtube-title-tube">Tube</span>';
+    title.innerHTML = `
+        <img src="${chrome.runtime.getURL('icon-32.png')}" alt="ReadTube" style="width: 20px; height: 20px; margin-right: 8px;">
+        <span class="readtube-title-me">Read</span><span class="readtube-title-tube">Tube</span>
+    `;
     
     const closeBtn = document.createElement('button');
     closeBtn.className = 'readtube-close-button';
