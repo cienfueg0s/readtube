@@ -1467,8 +1467,6 @@ searchStyles.textContent = `
     .search-highlight {
         background-color: rgba(255, 235, 59, 0.3);
         border-radius: 2px;
-        padding: 0 2px;
-        margin: 0 -2px;
     }
     
     .search-match {
@@ -1476,14 +1474,25 @@ searchStyles.textContent = `
     }
     
     .current-match {
+        display: inline-block;
         background: rgba(255, 235, 59, 0.1);
         border-radius: 4px;
-        padding: 4px 0;
-        margin: -4px 0;
+        padding: 2px 4px;
     }
     
     .current-match .search-highlight {
-        background-color: rgba(255, 235, 59, 0.5);
+        background-color: rgba(255, 235, 59, 0.4);
+    }
+
+    .transcript-line {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 8px 0;
+    }
+
+    .transcript-text {
+        flex: 1;
     }
 `;
 document.head.appendChild(searchStyles);
