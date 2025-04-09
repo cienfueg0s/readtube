@@ -1107,13 +1107,19 @@ async function fetchTranscript() {
             
             const textSpan = document.createElement('span');
             textSpan.className = 'transcript-text';
-            textSpan.textContent = text;
+            
+            // Create a temporary div to decode HTML entities
+            const decoder = document.createElement('div');
+            decoder.innerHTML = text;
+            const decodedText = decoder.textContent;
+            
+            textSpan.textContent = decodedText;
             
             line.appendChild(timestampSpan);
             line.appendChild(textSpan);
             transcriptContent.appendChild(line);
             
-            formattedTranscript += `[${timestamp}] ${text}\n`;
+            formattedTranscript += `[${timestamp}] ${decodedText}\n`;
         });
 
         // Store transcript for AI features
@@ -1136,45 +1142,100 @@ async function fetchTranscript() {
 function createTranscriptDisplay() {
     const container = document.createElement('div');
     container.className = 'readtube-transcript-container';
+    container.style.height = '100%';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
     
-    // Add title section
+    // Add title section with improved styling
     const titleElement = document.createElement('div');
     titleElement.className = 'transcript-title';
+    titleElement.style.padding = '16px 20px';
+    titleElement.style.borderBottom = '1px solid rgba(0, 0, 0, 0.08)';
+    titleElement.style.fontWeight = '500';
+    titleElement.style.fontSize = '15px';
+    titleElement.style.color = '#1a1a1a';
     const videoTitle = document.querySelector('h1.ytd-video-primary-info-renderer');
     titleElement.textContent = videoTitle ? videoTitle.textContent.trim() : 'Video Transcript';
     container.appendChild(titleElement);
     
+    // Enhanced search container
     const searchContainer = document.createElement('div');
     searchContainer.className = 'search-container';
+    searchContainer.style.padding = '12px 16px';
+    searchContainer.style.borderBottom = '1px solid rgba(0, 0, 0, 0.08)';
+    searchContainer.style.background = '#ffffff';
     
     const searchWrapper = document.createElement('div');
     searchWrapper.className = 'search-wrapper';
+    searchWrapper.style.display = 'flex';
+    searchWrapper.style.alignItems = 'center';
+    searchWrapper.style.gap = '12px';
+    
+    // Add search icon
+    const searchIcon = document.createElement('div');
+    searchIcon.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #666;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+    `;
+    searchIcon.style.display = 'flex';
+    searchIcon.style.alignItems = 'center';
     
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.className = 'search-input';
-    searchInput.placeholder = 'Search transcript...';
+    searchInput.placeholder = 'Search...';
+    searchInput.style.border = 'none';
+    searchInput.style.outline = 'none';
+    searchInput.style.width = '100%';
+    searchInput.style.fontSize = '14px';
+    searchInput.style.color = '#333';
     searchInput.oninput = (e) => searchTranscript(e.target.value);
+    searchInput.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            navigateSearch('next');
+        }
+    };
     
     const searchNav = document.createElement('div');
     searchNav.className = 'search-nav';
+    searchNav.style.display = 'flex';
+    searchNav.style.alignItems = 'center';
+    searchNav.style.gap = '8px';
     
     const navButtons = document.createElement('div');
     navButtons.className = 'search-nav-buttons';
+    navButtons.style.display = 'flex';
+    navButtons.style.gap = '4px';
     
     const prevButton = document.createElement('button');
     prevButton.className = 'search-nav-button';
+    prevButton.style.padding = '4px';
+    prevButton.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+    prevButton.style.borderRadius = '4px';
+    prevButton.style.background = '#ffffff';
+    prevButton.style.cursor = 'pointer';
     prevButton.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7" /></svg>`;
     prevButton.onclick = () => navigateSearch('prev');
     
     const nextButton = document.createElement('button');
     nextButton.className = 'search-nav-button';
+    nextButton.style.padding = '4px';
+    nextButton.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+    nextButton.style.borderRadius = '4px';
+    nextButton.style.background = '#ffffff';
+    nextButton.style.cursor = 'pointer';
     nextButton.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7" /></svg>`;
     nextButton.onclick = () => navigateSearch('next');
     
     const searchCounter = document.createElement('div');
     searchCounter.id = 'search-counter';
     searchCounter.className = 'search-counter';
+    searchCounter.style.fontSize = '12px';
+    searchCounter.style.color = '#666';
+    searchCounter.style.minWidth = '80px';
     
     navButtons.appendChild(prevButton);
     navButtons.appendChild(nextButton);
@@ -1182,6 +1243,7 @@ function createTranscriptDisplay() {
     searchNav.appendChild(navButtons);
     searchNav.appendChild(searchCounter);
     
+    searchWrapper.appendChild(searchIcon);
     searchWrapper.appendChild(searchInput);
     searchWrapper.appendChild(searchNav);
     
@@ -1190,14 +1252,29 @@ function createTranscriptDisplay() {
     
     const contentWrapper = document.createElement('div');
     contentWrapper.className = 'transcript-content-wrapper';
+    contentWrapper.style.flex = '1';
+    contentWrapper.style.position = 'relative';
+    contentWrapper.style.overflow = 'hidden';
     
-    // Add floating controls
+    // Enhanced floating controls
     const floatingControls = document.createElement('div');
     floatingControls.className = 'transcript-floating-controls';
+    floatingControls.style.position = 'absolute';
+    floatingControls.style.top = '16px';
+    floatingControls.style.right = '16px';
+    floatingControls.style.display = 'flex';
+    floatingControls.style.gap = '8px';
+    floatingControls.style.zIndex = '1';
     
     const copyButton = document.createElement('button');
     copyButton.className = 'transcript-action-button';
     copyButton.title = 'Copy transcript';
+    copyButton.style.padding = '8px';
+    copyButton.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+    copyButton.style.borderRadius = '6px';
+    copyButton.style.background = '#ffffff';
+    copyButton.style.cursor = 'pointer';
+    copyButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
     copyButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
@@ -1208,6 +1285,12 @@ function createTranscriptDisplay() {
     const downloadButton = document.createElement('button');
     downloadButton.className = 'transcript-action-button';
     downloadButton.title = 'Download transcript';
+    downloadButton.style.padding = '8px';
+    downloadButton.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+    downloadButton.style.borderRadius = '6px';
+    downloadButton.style.background = '#ffffff';
+    downloadButton.style.cursor = 'pointer';
+    downloadButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
     downloadButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1221,10 +1304,25 @@ function createTranscriptDisplay() {
     
     const transcriptContent = document.createElement('div');
     transcriptContent.id = 'readtube-transcript-content';
+    transcriptContent.style.height = '100%';
+    transcriptContent.style.overflow = 'auto';
+    transcriptContent.style.padding = '16px 20px 32px';
     
     contentWrapper.appendChild(floatingControls);
     contentWrapper.appendChild(transcriptContent);
     container.appendChild(contentWrapper);
+    
+    // Add hover effects for buttons
+    [copyButton, downloadButton, prevButton, nextButton].forEach(button => {
+        button.onmouseover = () => {
+            button.style.background = '#f8f9fa';
+            button.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+        };
+        button.onmouseout = () => {
+            button.style.background = '#ffffff';
+            button.style.borderColor = 'rgba(0, 0, 0, 0.1)';
+        };
+    });
     
     // Add click handlers
     copyButton.onclick = () => {
@@ -1238,7 +1336,7 @@ function createTranscriptDisplay() {
       
       navigator.clipboard.writeText(transcriptText).then(() => {
         copyButton.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00a67e" stroke-width="2">
             <path d="M20 6L9 17l-5-5"/>
           </svg>
         `;
@@ -1278,7 +1376,7 @@ function createTranscriptDisplay() {
       URL.revokeObjectURL(url);
       
       downloadButton.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00a67e" stroke-width="2">
           <path d="M20 6L9 17l-5-5"/>
         </svg>
       `;
@@ -1416,23 +1514,81 @@ function navigateSearch(direction) {
 // Add these styles to the document
 const style = document.createElement('style');
 style.textContent = `
+    .transcript-line {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        line-height: 1.5;
+    }
+    
+    .transcript-timestamp {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+        color: #666;
+        padding: 2px 6px;
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 4px;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+    }
+    
+    .transcript-timestamp:hover {
+        background: rgba(0, 0, 0, 0.06);
+        color: #333;
+    }
+    
+    .transcript-text {
+        flex: 1;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.5;
+    }
+    
     .search-match {
         background: transparent;
     }
+    
     .current-match {
-        background: rgba(255, 235, 59, 0.2) !important;
+        background: rgba(255, 235, 59, 0.1) !important;
     }
+    
     .search-highlight {
-        background-color: #ffeb3b;
-        color: #000;
+        background-color: rgba(255, 235, 59, 0.3);
+        border-radius: 2px;
+        padding: 0 2px;
+        margin: 0 -2px;
     }
+    
     @keyframes pulse {
-        0% { background-color: rgba(255, 235, 59, 0.2); }
-        50% { background-color: rgba(255, 235, 59, 0.4); }
-        100% { background-color: rgba(255, 235, 59, 0.2); }
+        0% { background-color: rgba(255, 235, 59, 0.1); }
+        50% { background-color: rgba(255, 235, 59, 0.2); }
+        100% { background-color: rgba(255, 235, 59, 0.1); }
     }
+    
     .current-match {
         animation: pulse 2s infinite;
+    }
+    
+    .search-nav-button:hover {
+        background: #f8f9fa !important;
+    }
+    
+    .search-nav-button:active {
+        background: #f0f0f0 !important;
+    }
+    
+    .transcript-action-button:hover {
+        background: #f8f9fa !important;
+        transform: translateY(-1px);
+    }
+    
+    .transcript-action-button:active {
+        background: #f0f0f0 !important;
+        transform: translateY(0);
     }
 `;
 document.head.appendChild(style);
