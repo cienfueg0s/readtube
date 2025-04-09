@@ -161,16 +161,39 @@
     }
 
     if (sidebar) {
-        const isHidden = sidebar.style.right === '-385px';
+        const isHidden = sidebar.style.right === '-420px' || sidebar.style.display === 'none';
+        
         if (forceOpen === true) {
+            sidebar.style.display = 'block';
             sidebar.style.right = '0';
             reopenTab.style.display = 'none';
         } else if (forceOpen === false) {
-            sidebar.style.right = '-385px';
+            sidebar.style.right = '-420px';
             reopenTab.style.display = 'flex';
+            // Add transition end listener to hide the sidebar after animation
+            const hideAfterTransition = () => {
+                sidebar.style.display = 'none';
+                sidebar.removeEventListener('transitionend', hideAfterTransition);
+            };
+            sidebar.addEventListener('transitionend', hideAfterTransition);
         } else {
-            sidebar.style.right = isHidden ? '0' : '-385px';
-            reopenTab.style.display = isHidden ? 'none' : 'flex';
+            if (isHidden) {
+                sidebar.style.display = 'block';
+                // Small delay to ensure display: block takes effect before transition
+                setTimeout(() => {
+                    sidebar.style.right = '0';
+                }, 10);
+                reopenTab.style.display = 'none';
+            } else {
+                sidebar.style.right = '-420px';
+                reopenTab.style.display = 'flex';
+                // Add transition end listener to hide the sidebar after animation
+                const hideAfterTransition = () => {
+                    sidebar.style.display = 'none';
+                    sidebar.removeEventListener('transitionend', hideAfterTransition);
+                };
+                sidebar.addEventListener('transitionend', hideAfterTransition);
+            }
         }
         console.log('ReadTube: Sidebar visibility:', sidebar.style.right === '0' ? 'shown' : 'hidden');
     } else {
@@ -355,20 +378,20 @@
     sidebarWrapper.style.position = 'fixed';
     sidebarWrapper.style.top = '60px';
     sidebarWrapper.style.right = '0'; // Start visible
-    sidebarWrapper.style.height = 'calc(100vh - 60px)';
-    sidebarWrapper.style.width = '385px';
+    sidebarWrapper.style.height = 'calc(100vh - 84px)';
+    sidebarWrapper.style.width = '420px';
     sidebarWrapper.style.transition = 'right 0.3s ease';
     sidebarWrapper.style.zIndex = '9999';
+    sidebarWrapper.style.marginBottom = '24px';
 
     // Create sidebar container first
     const sidebarContainer = document.createElement('div');
     sidebarContainer.id = 'readtube-sidebar-container';
-    sidebarContainer.style.width = `${currentSettings.sidebarWidth}px`;
-    sidebarContainer.style.height = `${currentSettings.sidebarHeight}vh`;
+    sidebarContainer.style.width = '420px';
+    sidebarContainer.style.height = '100%';
     sidebarContainer.style.backgroundColor = '#ffffff';
     sidebarContainer.style.display = 'flex';
     sidebarContainer.style.flexDirection = 'column';
-    sidebarContainer.style.height = '100%';
     sidebarContainer.style.boxShadow = '-4px 0 16px rgba(0, 0, 0, 0.1)';
 
     // Create header with improved styling

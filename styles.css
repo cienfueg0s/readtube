@@ -642,13 +642,15 @@
 /* Add shadow to sidebar */
 #readtube-sidebar-wrapper {
   box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
-  width: 385px !important;
+  width: 420px !important;
   max-width: 90vw;
   background: #ffffff;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  border-radius: 0;
+  border-radius: 8px 0 0 8px;
+  height: calc(100vh - 84px) !important;
+  margin-bottom: 24px;
 }
 
 /* Custom scrollbar styling */
