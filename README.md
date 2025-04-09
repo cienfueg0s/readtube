@@ -1,91 +1,40 @@
-# ReadTube iOS
+# ReadTube
 
-A native iOS app that records audio, transcribes it, and allows users to interact with the transcript using AI. This is the iOS version of ReadTube, focusing on audio recording and transcription capabilities.
+ReadTube is a browser extension that enhances your YouTube viewing experience with two powerful features: video transcripts and AI-powered conversations.
 
 ## Features
 
-- **Audio Recording**
-  - High-quality audio recording
-  - Background recording support
-  - Recording pause/resume
-  - Audio file management
+### 1. Transcript
+- Access a text version of any YouTube video's audio content
+- Navigate through content with timestamped text
+- Click on any line to jump to that exact moment in the video
+- Search through transcript text to find specific content
 
-- **Transcription**
-  - Real-time transcription using OpenAI's Whisper API
-  - Support for multiple languages
-  - Timestamp-based transcript navigation
+### 2. Ask AI
+- Have natural conversations about the video content
+- Ask questions and receive contextual answers
+- Get additional insights and explanations about the video's topics
 
-- **AI Chat**
-  - Interactive chat interface for asking questions about the transcript
-  - Context-aware responses using GPT-4/3.5
-  - Support for multiple AI models
+## How to Use
 
-## Technical Requirements
+1. Open a YouTube video you want to analyze
+2. Click the ReadTube icon in the top-right of your video
+3. Choose how you want to interact:
+   - Select "Transcript" to view and search through the video text
+   - Select "Ask" to start a conversation about the video content
 
-- iOS 15.0+
-- Xcode 14.0+
-- Swift 5.0+
-- OpenAI API Key
-- Microphone permissions
-- Background audio capabilities
+## Installation
 
-## Project Structure
+[Installation instructions to be added]
 
-```
-ReadTube/
-├── ReadTube/
-│   ├── App/
-│   │   ├── AppDelegate.swift
-│   │   └── SceneDelegate.swift
-│   ├── Features/
-│   │   ├── Recording/
-│   │   │   ├── RecordingViewController.swift
-│   │   │   ├── RecordingViewModel.swift
-│   │   │   └── RecordingView.swift
-│   │   ├── Transcription/
-│   │   │   ├── TranscriptionViewController.swift
-│   │   │   ├── TranscriptionViewModel.swift
-│   │   │   └── TranscriptionView.swift
-│   │   └── Chat/
-│   │       ├── ChatViewController.swift
-│   │       ├── ChatViewModel.swift
-│   │       └── ChatView.swift
-│   ├── Services/
-│   │   ├── AudioService.swift
-│   │   ├── TranscriptionService.swift
-│   │   └── AIService.swift
-│   ├── Models/
-│   │   ├── Recording.swift
-│   │   ├── Transcript.swift
-│   │   └── ChatMessage.swift
-│   └── Utils/
-│       ├── Constants.swift
-│       └── Extensions/
-└── Resources/
-    ├── Assets.xcassets/
-    └── Info.plist
-```
+## Privacy
 
-## Setup Instructions
+ReadTube respects your privacy and only processes video content when explicitly requested through the extension.
 
-1. Clone the repository
-2. Open `ReadTube.xcodeproj` in Xcode
-3. Add your OpenAI API key in the project settings
-4. Build and run the project
+## Support
 
-## Dependencies
+[Support information to be added]
 
-- OpenAI API for transcription and chat
-- AVFoundation for audio recording
-- CoreData for local storage
-- Combine framework for reactive programming
+## License
 
-## Future Enhancements
-
-- Cloud backup support
-- Share recordings and transcripts
-- Export options (TXT, SRT)
-- Offline mode
-- Background transcription
-- Multiple language support
-- Audio editing features
+[License information to be added]

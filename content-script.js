@@ -254,7 +254,12 @@
     // Add welcome message
     const welcomeMessage = document.createElement('div');
     welcomeMessage.className = 'readtube-message readtube-system-message';
-    welcomeMessage.innerHTML = '<strong>👋 Welcome to ReadTube AI Chat!</strong>';
+    welcomeMessage.innerHTML = `
+        <div style="padding: 16px 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.08);">
+            <div style="font-size: 15px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px;">Welcome! Ask me anything about this video.</div>
+            <div style="font-size: 13px; color: #666;">I can help you understand the content, find specific information, or analyze key points.</div>
+        </div>
+    `;
     messagesContainer.appendChild(welcomeMessage);
 
     // Add click handler for the fetch transcript button
@@ -872,145 +877,99 @@
             return;
         }
 
-        // Remove previous loading message if exists
+        // Add loading message
         const messagesContainer = document.getElementById('readtube-messages');
-        const loadingMessage = messagesContainer.querySelector('.readtube-message:last-child');
-        if (loadingMessage?.textContent === 'Loading...') {
-            messagesContainer.removeChild(loadingMessage);
-        }
-        
-        addMessageToChat('Loading...', 'system');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'readtube-message readtube-system-message';
+        loadingDiv.style.display = 'flex';
+        loadingDiv.style.alignItems = 'center';
+        loadingDiv.style.gap = '8px';
+        loadingDiv.style.padding = '8px 12px';
+        loadingDiv.style.fontSize = '13px';
+        loadingDiv.style.color = '#666';
+        loadingDiv.innerHTML = `
+            <div class="loading-dots">
+                <span style="animation: pulse 1s infinite">•</span>
+                <span style="animation: pulse 1s infinite .2s">•</span>
+                <span style="animation: pulse 1s infinite .4s">•</span>
+            </div>
+        `;
+        messagesContainer.appendChild(loadingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        // Prepare the messages array with better context
         const messages = [
             {
                 role: "system",
-                content: "You are a helpful AI assistant analyzing a YouTube video. Keep your responses clear and concise."
+                content: "You are a helpful AI assistant analyzing a YouTube video. Keep your responses very concise - aim for 2-4 sentences and under 50 words. Be direct and to the point."
             }
         ];
         
-        // Add transcript context if available
         if (window.videoTranscript) {
-            // Estimate token count (rough estimate: 1 token ≈ 4 chars)
-            const transcriptTokens = Math.ceil(window.videoTranscript.length / 4);
-            const messageTokens = Math.ceil(message.length / 4);
-            const systemTokens = 100; // Approximate tokens for system messages
-            const totalTokens = transcriptTokens + messageTokens + systemTokens;
-            
-            // Define model limits
-            const MODEL_LIMITS = {
-                'gpt-4-turbo-preview': 128000,
-                'gpt-3.5-turbo-16k': 16000,
-                'gpt-3.5-turbo': 4000
-            };
-            
-            // Check if transcript exceeds all model limits
-            if (totalTokens > MODEL_LIMITS['gpt-4-turbo-preview']) {
-                addMessageToChat(`⚠️ This transcript is too large (approximately ${totalTokens.toLocaleString()} tokens) to process in a single request, even with GPT-4 Turbo (${MODEL_LIMITS['gpt-4-turbo-preview'].toLocaleString()} token limit). Please ask about specific parts of the video instead.`, 'system');
-                return;
-            }
-            
-            // Add full transcript as context
             messages.push({
                 role: "system",
-                content: `Here is the complete video transcript:\n\n${window.videoTranscript}\n\nPlease use this context to answer questions about the video content.`
-            });
-            
-            // Add token usage warning if needed
-            if (totalTokens > MODEL_LIMITS['gpt-3.5-turbo']) {
-                messages.push({
-                    role: "system",
-                    content: `Note: This transcript is ${totalTokens.toLocaleString()} tokens. Will attempt GPT-4 Turbo first, then fall back to GPT-3.5-16k if unavailable.`
-                });
-            }
-        } else {
-            messages.push({
-                role: "system",
-                content: "No video transcript is loaded yet. You can only answer general questions."
+                content: `Here is the video transcript:\n\n${window.videoTranscript}\n\nProvide brief, focused answers about the video content.`
             });
         }
-        
-        // Add the user's message
+
         messages.push({
             role: "user",
             content: message
         });
 
-        // Try models in order of capability
-        const models = [
-            "gpt-4-turbo-preview",
-            "gpt-3.5-turbo-16k",
-            "gpt-3.5-turbo"
-        ];
-
-        let response;
-        let modelIndex = 0;
-        let success = false;
-
-        while (!success && modelIndex < models.length) {
-            const currentModel = models[modelIndex];
-            try {
-                response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify({
-                        model: currentModel,
-                        messages: messages,
-                        temperature: 0.7,
-                        max_tokens: 1000
-      })
-    });
-
-                if (response.ok) {
-                    success = true;
-                } else {
-                    const errorData = await response.json();
-                    if (errorData.error?.code === 'context_length_exceeded') {
-                        // Try next model if context length exceeded
-                        modelIndex++;
-                        continue;
-                    } else if (errorData.error?.code === 'model_not_available') {
-                        modelIndex++;
-                        continue;
-                    }
-                    throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
-                }
-            } catch (error) {
-                if (error.message.includes('context_length_exceeded') || 
-                    error.message.includes('model_not_available')) {
-                    modelIndex++;
-                    continue;
-                }
-                throw error;
-            }
-        }
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${openaiApiKey}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: messages,
+                temperature: 0.5,
+                max_tokens: 100,
+                presence_penalty: 0.1,
+                frequency_penalty: 0.1
+            })
+        });
 
         // Remove loading message
-        const lastMessage = messagesContainer.querySelector('.readtube-message:last-child');
-        if (lastMessage?.textContent === 'Loading...') {
-            messagesContainer.removeChild(lastMessage);
+        messagesContainer.removeChild(loadingDiv);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error?.message || `API request failed: ${response.status}`);
         }
 
-        if (!success) {
-            throw new Error('All available models failed to process the request. The transcript may be too long for your available models.');
-    }
-
-    const data = await response.json();
+        const data = await response.json();
         if (!data.choices?.[0]?.message?.content) {
             throw new Error('Invalid response format from API');
         }
-    
-    // Add AI response
-    addMessageToChat(data.choices[0].message.content, 'ai');
         
-  } catch (error) {
+        // Add AI response
+        addMessageToChat(data.choices[0].message.content, 'ai');
+    } catch (error) {
         console.error('Chat error:', error);
         addMessageToChat(`❌ Error: ${error.message}. Please try again.`, 'system');
     }
   }
+
+  // Add loading animation styles
+  const loadingStyle = document.createElement('style');
+  loadingStyle.textContent = `
+      @keyframes pulse {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+      }
+      .loading-dots {
+          display: flex;
+          gap: 2px;
+      }
+      .loading-dots span {
+          font-size: 20px;
+          line-height: 0;
+      }
+  `;
+  document.head.appendChild(loadingStyle);
 
   function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
@@ -1505,34 +1464,68 @@ function showAskInterface() {
     const welcomeMessage = document.createElement('div');
     welcomeMessage.className = 'readtube-message readtube-system-message';
     welcomeMessage.innerHTML = `
-        <strong>👋 Welcome! Ask me anything about this video.</strong>
-        <p style="margin-top: 8px; font-size: 13px;">I can help you understand the content, find specific information, or analyze key points.</p>
+        <div style="padding: 16px 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid rgba(0, 0, 0, 0.08);">
+            <div style="font-size: 15px; font-weight: 500; color: #1a1a1a; margin-bottom: 8px;">Welcome! Ask me anything about this video.</div>
+            <div style="font-size: 13px; color: #666;">I can help you understand the content, find specific information, or analyze key points.</div>
+        </div>
     `;
     messagesContainer.appendChild(welcomeMessage);
 
     // Create quick questions section
     const quickQuestions = [
-        "📝 Summarize this video",
-        "⭐ What are the main points?",
-        "❓ What questions were addressed?",
-        "💡 What are the key insights?",
-        "🎯 What are the takeaways?"
+        { icon: "📝", text: "Summarize" },
+        { icon: "🎭", text: "Sentiment" },
+        { icon: "📑", text: "Chapters" },
+        { icon: "⭐", text: "Key Moments" }
     ];
 
     const questionsContainer = document.createElement('div');
     questionsContainer.style.display = 'flex';
     questionsContainer.style.flexWrap = 'wrap';
     questionsContainer.style.gap = '8px';
-    questionsContainer.style.marginTop = '12px';
+    questionsContainer.style.margin = '16px 0';
 
-    quickQuestions.forEach(question => {
+    quickQuestions.forEach(({ icon, text }) => {
         const questionButton = document.createElement('button');
         questionButton.className = 'quick-question-button';
-        questionButton.textContent = question;
+        questionButton.style.fontSize = '13px';
+        questionButton.style.padding = '8px 16px';
+        questionButton.style.borderRadius = '8px';
+        questionButton.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+        questionButton.style.background = '#ffffff';
+        questionButton.style.cursor = 'pointer';
+        questionButton.style.transition = 'all 0.2s ease';
+        questionButton.style.color = '#2c2c2c';
+        questionButton.style.display = 'flex';
+        questionButton.style.alignItems = 'center';
+        questionButton.style.gap = '6px';
+        questionButton.style.fontWeight = '450';
+        questionButton.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.04)';
+
+        const iconSpan = document.createElement('span');
+        iconSpan.textContent = icon;
+        iconSpan.style.fontSize = '14px';
+
+        const textSpan = document.createElement('span');
+        textSpan.textContent = text;
+
+        questionButton.appendChild(iconSpan);
+        questionButton.appendChild(textSpan);
+
+        questionButton.onmouseover = () => {
+            questionButton.style.background = '#f8f9fa';
+            questionButton.style.transform = 'translateY(-1px)';
+            questionButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.06)';
+        };
+        questionButton.onmouseout = () => {
+            questionButton.style.background = '#ffffff';
+            questionButton.style.transform = 'translateY(0)';
+            questionButton.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.04)';
+        };
         questionButton.onclick = () => {
             const textarea = document.getElementById('readtube-chat-input');
             if (textarea) {
-                textarea.value = question;
+                textarea.value = text;
                 handleSendMessage();
             }
         };
