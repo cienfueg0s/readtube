@@ -1,26 +1,83 @@
 // MeTube 1.0.00 - popup.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const contentWrapper = document.querySelector('.content-wrapper');
-    const inactiveNotice = document.querySelector('.inactive-notice');
-    const statusList = document.querySelector('.status-list');
-    const videoTitle = document.querySelector('.video-title-text');
+    // Get UI elements
+    const notYoutubeMessage = document.getElementById('not-youtube-message');
+    const notVideoMessage = document.getElementById('not-video-message');
+    const mainContent = document.getElementById('main-content');
 
-    // Hide content initially
-    contentWrapper.style.display = 'none';
-    inactiveNotice.style.display = 'none';
-    
-    // Check if we're on a YouTube video page
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    // Navigation buttons
+    document.getElementById('goto-youtube').addEventListener('click', () => {
+        chrome.tabs.create({ url: 'https://www.youtube.com' });
+    });
+
+    document.getElementById('goto-home').addEventListener('click', () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const currentUrl = new URL(tabs[0].url);
+            chrome.tabs.update(tabs[0].id, { url: `${currentUrl.origin}/feed/subscriptions` });
+        });
+    });
+
+    // Check current state and initialize if needed
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
         const currentTab = tabs[0];
-        if (!currentTab.url?.includes('youtube.com/watch')) {
-            contentWrapper.style.display = 'none';
-            inactiveNotice.style.display = 'block';
-            return;
-        }
+        const url = currentTab?.url || '';
 
-        // We're on YouTube, initialize the popup
-        initializePopup();
+        if (!url.includes('youtube.com')) {
+            notYoutubeMessage.style.display = 'block';
+            notVideoMessage.style.display = 'none';
+            mainContent.style.display = 'none';
+        } else if (!url.includes('youtube.com/watch')) {
+            notYoutubeMessage.style.display = 'none';
+            notVideoMessage.style.display = 'block';
+            mainContent.style.display = 'none';
+        } else {
+            // Ensure content script is initialized
+            try {
+                await chrome.tabs.sendMessage(currentTab.id, { action: 'isInitialized' });
+            } catch (e) {
+                // If content script isn't ready, wait a bit and try again
+                await new Promise(resolve => setTimeout(resolve, 500));
+                await chrome.tabs.sendMessage(currentTab.id, { action: 'initialize' });
+            }
+            
+            notYoutubeMessage.style.display = 'none';
+            notVideoMessage.style.display = 'none';
+            mainContent.style.display = 'block';
+        }
+    });
+
+    // Add click handlers for features
+    document.getElementById('transcript').addEventListener('click', () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+            try {
+                await chrome.tabs.sendMessage(tabs[0].id, { 
+                    action: 'toggleSidebar',
+                    feature: 'transcript',
+                    openFromPopup: true,
+                    tab: 'transcript'
+                });
+                window.close();
+            } catch (e) {
+                console.error('Failed to open transcript:', e);
+            }
+        });
+    });
+
+    document.getElementById('ask').addEventListener('click', () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+            try {
+                await chrome.tabs.sendMessage(tabs[0].id, { 
+                    action: 'toggleSidebar',
+                    feature: 'ask',
+                    openFromPopup: true,
+                    tab: 'ask'
+                });
+                window.close();
+            } catch (e) {
+                console.error('Failed to open ask:', e);
+            }
+        });
     });
 });
 

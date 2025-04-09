@@ -1711,4 +1711,129 @@ navStyles.textContent = `
 `;
 document.head.appendChild(navStyles);
 
+function createPopupContent() {
+    const container = document.createElement('div');
+    container.className = 'readtube-popup-container';
+    
+    // Add logo section
+    const logoSection = document.createElement('div');
+    logoSection.className = 'readtube-logo-section';
+    logoSection.innerHTML = `
+        <img src="${chrome.runtime.getURL('icon-32.png')}" alt="ReadTube" style="width: 24px; height: 24px;">
+        <span style="font-size: 20px; margin-left: 8px;">ReadTube</span>
+    `;
+    container.appendChild(logoSection);
+
+    // Check current state
+    const currentUrl = window.location.href;
+    const isYouTube = currentUrl.includes('youtube.com');
+    const isVideoPage = currentUrl.includes('youtube.com/watch');
+    const hasTranscript = document.querySelector('.ytp-captions-button[aria-pressed="true"]');
+
+    let content = '';
+    
+    if (!isYouTube) {
+        // Not on YouTube
+        content = `
+            <div class="readtube-state-message">
+                <p>📺 Open any YouTube video to get started</p>
+            </div>
+        `;
+    } else if (!isVideoPage) {
+        // On YouTube but not on a video
+        content = `
+            <div class="readtube-state-message">
+                <p>🎥 Open a specific video to use ReadTube</p>
+            </div>
+        `;
+    } else {
+        // On a video page - show the three options
+        content = `
+            <div class="readtube-options">
+                <div class="readtube-option" data-option="ask">
+                    <h3>💬 Ask AI</h3>
+                    <p>Have a natural conversation about the video content</p>
+                </div>
+                <div class="readtube-option" data-option="insights">
+                    <h3>✨ Insights</h3>
+                    <p>Get quick analysis and key moments</p>
+                </div>
+                <div class="readtube-option" data-option="transcript">
+                    <h3>📝 Transcript</h3>
+                    <p>Search and navigate through the video</p>
+                </div>
+            </div>
+        `;
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.innerHTML = content;
+    container.appendChild(contentDiv);
+
+    // Add styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .readtube-popup-container {
+            padding: 16px;
+            min-width: 300px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .readtube-logo-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .readtube-state-message {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .readtube-state-message p {
+            margin: 0;
+            color: #1a1a1a;
+            font-size: 15px;
+        }
+
+        .readtube-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .readtube-option {
+            padding: 12px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .readtube-option:hover {
+            background: #f0f0f0;
+            transform: translateY(-1px);
+        }
+
+        .readtube-option h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .readtube-option p {
+            margin: 4px 0 0 0;
+            font-size: 13px;
+            color: #666;
+        }
+    `;
+    document.head.appendChild(style);
+
+    return container;
+}
+
 })();
