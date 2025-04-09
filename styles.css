@@ -1,4 +1,4 @@
-.metube-chat-container {
+.readtube-chat-container {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -7,7 +7,7 @@
   background: #ffffff;
 }
 
-.metube-messages {
+.readtube-messages {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
@@ -16,7 +16,7 @@
   border: 1px solid #e0e0e0;
 }
 
-.metube-message {
+.readtube-message {
   margin-bottom: 16px;
   padding: 12px 16px;
   border-radius: 12px;
@@ -24,7 +24,7 @@
   line-height: 1.5;
 }
 
-.metube-system-message {
+.readtube-system-message {
   background: #f8f9fa;
   color: #333;
   margin-left: auto;
@@ -32,19 +32,19 @@
   max-width: 95%;
 }
 
-.metube-user-message {
+.readtube-user-message {
   background: #e3f2fd;
   margin-left: auto;
   color: #1565c0;
 }
 
-.metube-ai-message {
+.readtube-ai-message {
   background: #f5f5f5;
   margin-right: auto;
   color: #333;
 }
 
-.metube-input-container {
+.readtube-input-container {
   display: flex;
   gap: 8px;
   padding: 16px;
@@ -52,7 +52,7 @@
   border-top: 1px solid #eee;
 }
 
-.metube-chat-input {
+.readtube-chat-input {
   flex: 1;
   min-height: 40px;
   max-height: 120px;
@@ -65,13 +65,13 @@
   line-height: 1.5;
 }
 
-.metube-chat-input:focus {
+.readtube-chat-input:focus {
   outline: none;
   border-color: #ff0000;
   box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.1);
 }
 
-.metube-send-button {
+.readtube-send-button {
   width: 40px;
   height: 40px;
   padding: 0;
@@ -86,17 +86,17 @@
   transition: all 0.2s;
 }
 
-.metube-send-button:hover {
+.readtube-send-button:hover {
   background: #cc0000;
   transform: translateY(-1px);
 }
 
-.metube-send-button:active {
+.readtube-send-button:active {
   transform: translateY(0);
 }
 
 /* Transcript styles */
-.metube-transcript-container {
+.readtube-transcript-container {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -227,7 +227,7 @@
   position: relative;
 }
 
-#metube-transcript-content {
+#readtube-transcript-content {
   padding: 16px;
 }
 
@@ -413,7 +413,7 @@
   font-size: 14px;
 }
 
-.metube-notification {
+.readtube-notification {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -423,6 +423,14 @@
   color: #ffffff;
   font-size: 14px;
   animation: slideIn 0.3s ease;
+}
+
+.readtube-notification.success {
+  background: rgba(0, 128, 0, 0.8);
+}
+
+.readtube-notification.error {
+  background: rgba(255, 0, 0, 0.8);
 }
 
 @keyframes slideIn {
@@ -437,7 +445,7 @@
 }
 
 /* Settings specific styles */
-.metube-settings-container {
+.readtube-settings-container {
   padding: 24px;
   max-width: 100%;
   height: 100%;
@@ -491,7 +499,7 @@
 }
 
 /* Add resize handle styles */
-#metube-resize-handle {
+#readtube-resize-handle {
   position: absolute;
   left: -8px;
   top: 0;
@@ -506,7 +514,7 @@
   justify-content: center;
 }
 
-#metube-resize-handle::before {
+#readtube-resize-handle::before {
   content: '';
   position: absolute;
   left: 7px;
@@ -517,17 +525,17 @@
   transition: all 0.2s ease;
 }
 
-#metube-resize-handle:hover::before {
+#readtube-resize-handle:hover::before {
   background: #ff0000;
   height: 32px;
 }
 
-#metube-resize-handle.resizing::before {
+#readtube-resize-handle.resizing::before {
   background: #ff0000;
   height: 40px;
 }
 
-#metube-resize-overlay {
+#readtube-resize-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -538,14 +546,14 @@
   background: transparent;
 }
 
-.metube-tabs {
+.readtube-tabs {
   display: flex;
   padding: 0 4px;
   border-bottom: 1px solid #eee;
   background: #fff;
 }
 
-.metube-tab {
+.readtube-tab {
   padding: 12px 16px;
   border: none;
   background: none;
@@ -556,16 +564,16 @@
   transition: all 0.2s;
 }
 
-.metube-tab:hover {
+.readtube-tab:hover {
   color: #333;
 }
 
-.metube-tab.active {
+.readtube-tab.active {
   color: #ff0000;
   font-weight: 500;
 }
 
-.metube-tab.active::after {
+.readtube-tab.active::after {
   content: '';
   position: absolute;
   bottom: -1px;
@@ -576,7 +584,7 @@
 }
 
 /* Header improvements */
-.metube-header {
+.readtube-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -584,7 +592,7 @@
   border-bottom: 1px solid #eee;
 }
 
-.metube-title {
+.readtube-title {
   font-weight: 600;
   font-size: 16px;
   display: flex;
@@ -592,15 +600,15 @@
   letter-spacing: -0.3px;
 }
 
-.metube-title-me {
+.readtube-title-me {
   color: #333;
 }
 
-.metube-title-tube {
+.readtube-title-tube {
   color: #ff0000;
 }
 
-.metube-close-button {
+.readtube-close-button {
   background: none;
   border: none;
   font-size: 24px;
@@ -612,34 +620,34 @@
   transition: all 0.2s ease;
 }
 
-.metube-close-button:hover {
+.readtube-close-button:hover {
   background: #f0f0f0;
   color: #ff0000;
   transform: translateY(-1px);
 }
 
 /* Add shadow to sidebar */
-#metube-sidebar-wrapper {
+#readtube-sidebar-wrapper {
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
 }
 
 /* Improve scrollbars */
-#metube-transcript-content::-webkit-scrollbar {
+#readtube-transcript-content::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-#metube-transcript-content::-webkit-scrollbar-track {
+#readtube-transcript-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-#metube-transcript-content::-webkit-scrollbar-thumb {
+#readtube-transcript-content::-webkit-scrollbar-thumb {
   background: #ddd;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
 
-#metube-transcript-content::-webkit-scrollbar-thumb:hover {
+#readtube-transcript-content::-webkit-scrollbar-thumb:hover {
   background: #ccc;
 }
 
@@ -655,4 +663,26 @@
 
 .transcript-line:hover .transcript-timestamp {
   background: #e8e8e8;
+}
+
+.quick-question-button {
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.quick-question-button:hover {
+  background: #e8e8e8;
+  border-color: #d0d0d0;
+  transform: translateY(-1px);
+}
+
+.quick-question-button:active {
+  transform: translateY(0);
 }

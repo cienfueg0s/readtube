@@ -1,7 +1,7 @@
 (function() {
   'use strict';
   
-  console.log('MeTube: Script loaded');
+  console.log('ReadTube: Script loaded');
   
   let sidebarInitialized = false;
   let currentSettings = {
@@ -16,12 +16,12 @@
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
         case 'isSidebarOpen':
-            const sidebar = document.getElementById('metube-sidebar');
+            const sidebar = document.getElementById('readtube-sidebar');
             sendResponse({ isOpen: sidebar && sidebar.style.right === '0px' });
             break;
 
         case 'toggleSidebar':
-            toggleSidebar();
+            toggleSidebar(request.openFromPopup);
             if (request.openFromPopup) {
                 showTranscript(); // Ensure transcript tab is shown when opened from popup
             }
@@ -123,7 +123,7 @@
 
   // Load settings from storage
   async function loadSettings() {
-    console.log('MeTube: Loading settings');
+    console.log('ReadTube: Loading settings');
     try {
       const settings = await chrome.storage.local.get(null);
       currentSettings = {
@@ -133,46 +133,86 @@
         sidebarHeight: settings.sidebarHeight ?? 70,
         autoFetch: settings.autoFetch ?? true
       };
-      console.log('MeTube: Settings loaded:', currentSettings);
+      console.log('ReadTube: Settings loaded:', currentSettings);
       if (sidebarInitialized) {
         applySettings();
       }
     } catch (error) {
-      console.error('MeTube: Error loading settings:', error);
+      console.error('ReadTube: Error loading settings:', error);
     }
   }
   
-  function toggleSidebar() {
-    console.log('MeTube: Toggling sidebar');
-    const sidebar = document.getElementById('metube-sidebar-wrapper');
+  function toggleSidebar(forceOpen) {
+    console.log('ReadTube: Toggling sidebar');
+    const sidebar = document.getElementById('readtube-sidebar-wrapper');
     if (sidebar) {
         const isHidden = sidebar.style.right === '-350px';
-        sidebar.style.right = isHidden ? '0' : '-350px';
-      console.log('MeTube: Sidebar visibility:', isHidden ? 'shown' : 'hidden');
+        if (forceOpen === true) {
+            sidebar.style.right = '0';
+        } else if (forceOpen === false) {
+            sidebar.style.right = '-350px';
+        } else {
+            sidebar.style.right = isHidden ? '0' : '-350px';
+        }
+        console.log('ReadTube: Sidebar visibility:', sidebar.style.right === '0' ? 'shown' : 'hidden');
     } else {
-      console.log('MeTube: Sidebar element not found');
+        console.log('ReadTube: Sidebar element not found');
     }
   }
   
   // Basic initialization
   function initializeSidebar() {
-    if (sidebarInitialized || !window.location.href.includes('youtube.com/watch')) {
-      return;
+    console.log('Initializing sidebar...');
+    
+    // Only initialize on YouTube watch pages
+    if (!window.location.href.includes('youtube.com/watch')) {
+        console.log('Not a YouTube watch page, skipping initialization');
+        return;
     }
     
-    createSidebar();
-    sidebarInitialized = true;
+    // Check if already initialized
+    if (sidebarInitialized) {
+        console.log('Sidebar already initialized');
+        return;
+    }
+    
+    // Wait for YouTube's content to be ready
+    const waitForYouTube = setInterval(() => {
+        const ytdApp = document.querySelector('ytd-app');
+        if (ytdApp) {
+            clearInterval(waitForYouTube);
+            console.log('YouTube content ready, creating sidebar');
+            createSidebar();
+            sidebarInitialized = true;
+        }
+    }, 1000);
+
+    // Clear interval after 10 seconds to prevent infinite checking
+    setTimeout(() => clearInterval(waitForYouTube), 10000);
   }
 
   // Watch for URL changes
   let lastUrl = window.location.href;
-  new MutationObserver(() => {
-    if (lastUrl !== window.location.href) {
-      lastUrl = window.location.href;
-      sidebarInitialized = false;
-      setTimeout(initializeSidebar, 1000);
+  const urlObserver = new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (lastUrl !== currentUrl) {
+        console.log('URL changed, reinitializing sidebar');
+        lastUrl = currentUrl;
+        sidebarInitialized = false;
+        
+        // Remove existing sidebar if present
+        const existingSidebar = document.getElementById('readtube-sidebar-wrapper');
+        if (existingSidebar) {
+            existingSidebar.remove();
+        }
+        
+        // Initialize new sidebar after a short delay
+        setTimeout(initializeSidebar, 1000);
     }
-  }).observe(document.querySelector("title"), { 
+  });
+
+  // Start URL observation
+  urlObserver.observe(document.querySelector("title"), { 
     subtree: true, 
     characterData: true, 
     childList: true 
@@ -187,40 +227,16 @@
 
   function createChatInterface() {
     const chatContainer = document.createElement('div');
-    chatContainer.className = 'metube-chat-container';
+    chatContainer.className = 'readtube-chat-container';
 
     const messagesContainer = document.createElement('div');
-    messagesContainer.className = 'metube-messages';
-    messagesContainer.id = 'metube-messages';
+    messagesContainer.className = 'readtube-messages';
+    messagesContainer.id = 'readtube-messages';
 
     // Add welcome message
     const welcomeMessage = document.createElement('div');
-    welcomeMessage.className = 'metube-message metube-system-message';
-    welcomeMessage.innerHTML = `
-      <div style="margin-bottom: 16px;">
-        <strong>👋 Welcome to MeTube AI Chat!</strong>
-      </div>
-      <div style="margin-bottom: 12px;">
-        I can help you with:
-        <ul style="margin-top: 8px; margin-bottom: 8px; padding-left: 20px;">
-          <li>Understanding complex topics from the video</li>
-          <li>Finding specific information in the transcript</li>
-          <li>Explaining technical concepts mentioned</li>
-          <li>Summarizing key points</li>
-        </ul>
-      </div>
-      <div style="margin-bottom: 16px;">
-        <button id="fetch-transcript-btn" class="transcript-button primary" style="width: auto; margin: 0;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 5h12M9 3v4m1.5-2H21v18H3V3h7.5M9 19h6m-6-4h8" />
-          </svg>
-          Get Video Context
-        </button>
-      </div>
-      <div style="color: #666; font-size: 13px;">
-        To get started, make sure you've added your OpenAI API key in Settings.
-      </div>
-    `;
+    welcomeMessage.className = 'readtube-message readtube-system-message';
+    welcomeMessage.innerHTML = '<strong>👋 Welcome to ReadTube AI Chat!</strong>';
     messagesContainer.appendChild(welcomeMessage);
 
     // Add click handler for the fetch transcript button
@@ -234,7 +250,7 @@
           try {
             // Create a temporary container for the transcript
             const tempContainer = document.createElement('div');
-            tempContainer.id = 'metube-transcript-content';
+            tempContainer.id = 'readtube-transcript-content';
             document.body.appendChild(tempContainer);
             
             // Fetch the transcript
@@ -278,12 +294,12 @@
     }, 0);
 
     const inputContainer = document.createElement('div');
-    inputContainer.className = 'metube-input-container';
+    inputContainer.className = 'readtube-input-container';
 
     const textarea = document.createElement('textarea');
-    textarea.className = 'metube-chat-input';
+    textarea.className = 'readtube-chat-input';
     textarea.placeholder = 'Ask about the video...';
-    textarea.id = 'metube-chat-input';
+    textarea.id = 'readtube-chat-input';
 
     // Add enter key handling
     textarea.addEventListener('keydown', (e) => {
@@ -294,7 +310,7 @@
     });
 
     const sendButton = document.createElement('button');
-    sendButton.className = 'metube-send-button';
+    sendButton.className = 'readtube-send-button';
     sendButton.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
@@ -312,36 +328,36 @@
   
   function createSidebar() {
     const sidebarWrapper = document.createElement('div');
-    sidebarWrapper.id = 'metube-sidebar-wrapper';
+    sidebarWrapper.id = 'readtube-sidebar-wrapper';
     sidebarWrapper.style.position = 'fixed';
     sidebarWrapper.style.top = '60px';
-    sidebarWrapper.style.right = '0';
-    sidebarWrapper.style.zIndex = '9999';
-    sidebarWrapper.style.borderRadius = '8px 0 0 8px';
+    sidebarWrapper.style.right = '0'; // Start visible
+    sidebarWrapper.style.height = 'calc(100vh - 60px)';
+    sidebarWrapper.style.width = '350px';
     sidebarWrapper.style.transition = 'right 0.3s ease';
-    sidebarWrapper.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-    sidebarWrapper.style.maxHeight = 'calc(100vh - 70px)';
-    sidebarWrapper.style.background = '#ffffff';
-    
+    sidebarWrapper.style.zIndex = '9999';
+
     // Create sidebar container first
     const sidebarContainer = document.createElement('div');
-    sidebarContainer.id = 'metube-sidebar-container';
+    sidebarContainer.id = 'readtube-sidebar-container';
     sidebarContainer.style.width = `${currentSettings.sidebarWidth}px`;
     sidebarContainer.style.height = `${currentSettings.sidebarHeight}vh`;
+    sidebarContainer.style.backgroundColor = '#ffffff';
     sidebarContainer.style.display = 'flex';
     sidebarContainer.style.flexDirection = 'column';
-    sidebarContainer.style.background = '#ffffff';
-    
+    sidebarContainer.style.height = '100%';
+    sidebarContainer.style.boxShadow = '-4px 0 16px rgba(0, 0, 0, 0.1)';
+
     // Create header with improved styling
     const header = document.createElement('div');
-    header.className = 'metube-header';
+    header.className = 'readtube-header';
     
     const title = document.createElement('div');
-    title.className = 'metube-title';
-    title.innerHTML = '<span class="metube-title-me">Me</span><span class="metube-title-tube">Tube</span>';
+    title.className = 'readtube-title';
+    title.innerHTML = '<span class="readtube-title-me">Read</span><span class="readtube-title-tube">Tube</span>';
     
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'metube-close-button';
+    closeBtn.className = 'readtube-close-button';
     closeBtn.innerHTML = '×';
     closeBtn.onclick = toggleSidebar;
     
@@ -350,67 +366,71 @@
     
     // Create tabs with improved styling
     const tabs = document.createElement('div');
-    tabs.className = 'metube-tabs';
+    tabs.className = 'readtube-tabs';
     
     const transcriptTab = document.createElement('button');
-    transcriptTab.className = 'metube-tab active';
+    transcriptTab.className = 'readtube-tab active';
     transcriptTab.textContent = 'Transcript';
     
-    const aiChatTab = document.createElement('button');
-    aiChatTab.className = 'metube-tab';
-    aiChatTab.textContent = 'AI Chat';
+    const askTab = document.createElement('button');
+    askTab.className = 'readtube-tab';
+    askTab.textContent = 'Ask';
     
     const settingsTab = document.createElement('button');
-    settingsTab.className = 'metube-tab metube-tab-settings';
+    settingsTab.className = 'readtube-tab readtube-tab-settings';
     settingsTab.textContent = 'Settings';
     
     transcriptTab.onclick = () => {
-      updateActiveTab(transcriptTab);
+        updateActiveTab(transcriptTab);
         showTranscript();
     };
-    
-    aiChatTab.onclick = () => {
-      updateActiveTab(aiChatTab);
-        showAIChat();
+
+    askTab.onclick = () => {
+        updateActiveTab(askTab);
+        showAskInterface();
     };
     
     settingsTab.onclick = () => {
-      updateActiveTab(settingsTab);
+        updateActiveTab(settingsTab);
         showSettings();
     };
     
     function updateActiveTab(activeTab) {
-      tabs.querySelectorAll('.metube-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      activeTab.classList.add('active');
+        tabs.querySelectorAll('.readtube-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        activeTab.classList.add('active');
     }
     
     tabs.appendChild(transcriptTab);
-    tabs.appendChild(aiChatTab);
+    tabs.appendChild(askTab);
     tabs.appendChild(settingsTab);
     
     const mainContainer = document.createElement('div');
-    mainContainer.id = 'metube-main-container';
+    mainContainer.id = 'readtube-main-container';
     mainContainer.style.flex = '1';
     mainContainer.style.overflow = 'auto';
-    mainContainer.style.background = '#ffffff';
     
     sidebarContainer.appendChild(header);
     sidebarContainer.appendChild(tabs);
     sidebarContainer.appendChild(mainContainer);
     sidebarWrapper.appendChild(sidebarContainer);
-    
     document.body.appendChild(sidebarWrapper);
-    
-    // Initialize with transcript view
-    showTranscript();
+
+    // Initialize with transcript view and fetch transcript
+    fetchTranscript().then(success => {
+        if (success) {
+            showTranscript();
+        }
+    });
+
+    sidebarInitialized = true;
   }
 
   function applySettings() {
-    const sidebar = document.getElementById('metube-sidebar-wrapper');
-    const container = document.getElementById('metube-sidebar-container');
-    const mainContainer = document.getElementById('metube-main-container');
+    const sidebar = document.getElementById('readtube-sidebar-wrapper');
+    const container = document.getElementById('readtube-sidebar-container');
+    const mainContainer = document.getElementById('readtube-main-container');
     
     if (!sidebar || !container || !mainContainer) return;
 
@@ -438,13 +458,13 @@
     });
     
     // Apply styles to chat messages
-    document.querySelectorAll('.metube-message').forEach(msg => {
+    document.querySelectorAll('.readtube-message').forEach(msg => {
       msg.style.color = textColor;
     });
   }
   
   function showTranscript() {
-    const mainContainer = document.getElementById('metube-main-container');
+    const mainContainer = document.getElementById('readtube-main-container');
     if (mainContainer) {
         mainContainer.innerHTML = '';
         mainContainer.appendChild(createTranscriptDisplay());
@@ -454,43 +474,315 @@
   }
   
   function showAIChat() {
-    const mainContainer = document.getElementById('metube-main-container');
+    const mainContainer = document.getElementById('readtube-main-container');
     if (mainContainer) {
         mainContainer.innerHTML = '';
         mainContainer.appendChild(createChatInterface());
     }
   }
   
-  function showSettings() {
-    const mainContainer = document.getElementById('metube-main-container');
+  function showInsights() {
+    const mainContainer = document.getElementById('readtube-main-container');
     if (!mainContainer) return;
     
-        mainContainer.innerHTML = '';
+    mainContainer.innerHTML = '';
+    
+    const insightsContainer = document.createElement('div');
+    insightsContainer.className = 'readtube-insights-container';
+    
+    // Auto-generated summary section
+    const summarySection = document.createElement('div');
+    summarySection.className = 'insights-summary-section';
+    summarySection.style.padding = '20px';
+    summarySection.style.borderBottom = '1px solid #eee';
+    summarySection.innerHTML = `
+        <div style="margin-bottom: 16px;">
+            <h2 style="font-size: 18px; margin: 0;">✨ What just happened in this video?</h2>
+        </div>
+        <div id="auto-summary" style="color: #666; font-size: 14px; margin-bottom: 20px;">
+            Loading summary...
+        </div>
+    `;
+    insightsContainer.appendChild(summarySection);
+
+    // Create insights buttons container
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'insights-buttons-container';
+    buttonsContainer.style.display = 'flex';
+    buttonsContainer.style.flexDirection = 'column';
+    buttonsContainer.style.gap = '12px';
+    buttonsContainer.style.padding = '16px';
+    
+    // Define insight buttons with new structure
+    const insightButtons = [
+        {
+            label: '📝 Smart Summary',
+            prompt: 'Generate a concise summary of this video that covers the main topics discussed and key conclusions. Format it as: "This video covers X, Y, and ends with Z."'
+        },
+        {
+            label: '⏱️ Key Moments',
+            prompt: 'Analyze the transcript and identify the most significant moments or turning points in the video. Look for emotional shifts, controversial statements, important revelations, or "mic drop" moments. Include timestamps.'
+        },
+        {
+            label: '🎭 Sentiment Overview',
+            prompt: 'Analyze the overall tone and sentiment of the video. Identify emotional patterns, shifts in tone, and provide a breakdown of positive vs negative sentiment. Include specific examples from the transcript.'
+        },
+        {
+            label: '❓ Questions & Answers',
+            prompt: 'Extract and answer the most important questions raised or addressed in this video. Format as Q&A pairs, focusing on key insights and memorable quotes.'
+        },
+        {
+            label: '🔍 Deep Analysis',
+            prompt: 'Provide an in-depth analysis of the main arguments, supporting evidence, and potential counterpoints presented in the video. Include notable quotes and their context.'
+        }
+    ];
+    
+    // Create and add buttons
+    insightButtons.forEach(button => {
+        const buttonElement = document.createElement('button');
+        buttonElement.className = 'insight-button';
+        buttonElement.innerHTML = button.label;
+        buttonElement.style.padding = '12px 16px';
+        buttonElement.style.border = '1px solid #ddd';
+        buttonElement.style.borderRadius = '8px';
+        buttonElement.style.background = '#ffffff';
+        buttonElement.style.cursor = 'pointer';
+        buttonElement.style.transition = 'all 0.2s';
+        buttonElement.style.fontSize = '14px';
+        buttonElement.style.textAlign = 'left';
+        buttonElement.style.width = '100%';
+        buttonElement.style.display = 'flex';
+        buttonElement.style.alignItems = 'center';
+        buttonElement.style.justifyContent = 'space-between';
+        
+        // Add arrow icon
+        buttonElement.innerHTML += `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 8px;">
+                <path d="M9 18l6-6-6-6"/>
+            </svg>
+        `;
+        
+        // Hover effects
+        buttonElement.onmouseover = () => {
+            buttonElement.style.background = '#f5f5f5';
+            buttonElement.style.borderColor = '#ccc';
+        };
+        buttonElement.onmouseout = () => {
+            buttonElement.style.background = '#ffffff';
+            buttonElement.style.borderColor = '#ddd';
+        };
+        
+        // Click handler
+        buttonElement.onclick = async () => {
+            try {
+                const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+                if (!openaiApiKey) {
+                    showNotification('⚠️ Please add your OpenAI API key in the Settings tab first.', 'error');
+                    return;
+                }
+
+                if (!window.videoTranscript) {
+                    // If no transcript, try to fetch it first
+                    const tempContainer = document.createElement('div');
+                    tempContainer.id = 'metube-transcript-content';
+                    document.body.appendChild(tempContainer);
+                    
+                    await fetchTranscript();
+                    document.body.removeChild(tempContainer);
+                    
+                    if (!window.videoTranscript) {
+                        showNotification('⚠️ Please load the video transcript first.', 'error');
+                        return;
+                    }
+                }
+
+                // Clear previous content and show loading state
+                const responseContainer = document.createElement('div');
+                responseContainer.className = 'insight-response';
+                responseContainer.style.padding = '20px';
+                responseContainer.innerHTML = '<div style="text-align: center;">Analyzing video content...</div>';
+                
+                insightsContainer.innerHTML = '';
+                insightsContainer.appendChild(responseContainer);
+
+                // Send to OpenAI with enhanced prompt
+                const response = await sendToOpenAIWithResponse(button.prompt);
+                
+                // Display the response with better formatting
+                responseContainer.innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <button class="back-to-insights" style="background: none; border: none; cursor: pointer; color: #666; display: flex; align-items: center; gap: 8px; padding: 8px 0;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                            Back to Insights
+                        </button>
+                    </div>
+                    <h3 style="margin-bottom: 16px; font-size: 18px;">${button.label}</h3>
+                    <div style="white-space: pre-wrap; line-height: 1.5; color: #333;">${response}</div>
+                `;
+
+                // Add click handler for the back button
+                const backButton = responseContainer.querySelector('.back-to-insights');
+                if (backButton) {
+                    backButton.onclick = () => showInsights();
+                }
+            } catch (error) {
+                showNotification(`❌ Error: ${error.message}`, 'error');
+            }
+        };
+        
+        buttonsContainer.appendChild(buttonElement);
+    });
+    
+    insightsContainer.appendChild(buttonsContainer);
+    mainContainer.appendChild(insightsContainer);
+
+    // Auto-generate initial summary
+    generateInitialSummary();
+  }
+
+  // New function to handle OpenAI responses for insights
+  async function sendToOpenAIWithResponse(prompt) {
+    try {
+        const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+        if (!openaiApiKey) throw new Error('OpenAI API key not found');
+
+        const messages = [
+            {
+                role: "system",
+                content: "You are an AI assistant analyzing YouTube video content. Provide clear, concise, and insightful analysis."
+            }
+        ];
+
+        if (window.videoTranscript) {
+            messages.push({
+                role: "system",
+                content: `Here is the video transcript:\n\n${window.videoTranscript}`
+            });
+        }
+
+        messages.push({
+            role: "user",
+            content: prompt
+        });
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${openaiApiKey}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: messages,
+                temperature: 0.7,
+                max_tokens: 1000
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to get response from OpenAI');
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content;
+    } catch (error) {
+        throw new Error(`Failed to analyze video: ${error.message}`);
+    }
+  }
+
+  // Function to generate initial summary
+  async function generateInitialSummary() {
+    try {
+        const summaryElement = document.getElementById('auto-summary');
+        if (!summaryElement) return;
+
+        const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+        if (!openaiApiKey) {
+            summaryElement.innerHTML = `
+                <div style="color: #666; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+                    Please add your OpenAI API key in Settings to get video insights.
+                </div>`;
+            return;
+        }
+
+        if (!window.videoTranscript) {
+            // Try to fetch transcript
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'metube-transcript-content';
+            document.body.appendChild(tempContainer);
+            
+            await fetchTranscript();
+            document.body.removeChild(tempContainer);
+        }
+
+        if (!window.videoTranscript) {
+            summaryElement.innerHTML = `
+                <div style="color: #666; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+                    Please load the video transcript to get insights.
+                </div>`;
+            return;
+        }
+
+        summaryElement.innerHTML = `
+            <div style="color: #666; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                    </svg>
+                    Analyzing video content...
+                </div>
+            </div>
+        `;
+
+        const response = await sendToOpenAIWithResponse(
+            "Provide a very concise 2-3 sentence summary of what happened in this video. Focus on the main topic and key takeaway."
+        );
+
+        summaryElement.innerHTML = `
+            <div style="color: #333; line-height: 1.5;">
+                ${response}
+            </div>`;
+    } catch (error) {
+        const summaryElement = document.getElementById('auto-summary');
+        if (summaryElement) {
+            summaryElement.innerHTML = `
+                <div style="color: #ff4444; padding: 12px; background: #fff5f5; border-radius: 6px;">
+                    Error generating summary: ${error.message}
+                </div>`;
+        }
+    }
+  }
+
+  function showSettings() {
+    const mainContainer = document.getElementById('readtube-main-container');
+    if (!mainContainer) return;
+    
+    mainContainer.innerHTML = '';
     
     const settingsContainer = document.createElement('div');
-    settingsContainer.className = 'metube-settings-container';
+    settingsContainer.className = 'readtube-settings-container';
     
-    // AI Chat Settings Section
+    // AI Settings Section
     const aiSection = document.createElement('div');
     aiSection.className = 'settings-section';
     
     const aiTitle = document.createElement('h3');
-    aiTitle.textContent = 'AI Chat Settings';
+    aiTitle.textContent = 'AI Settings';
     
-    // API Key input with enhanced description
-    const apiDescription = document.createElement('p');
+    const apiDescription = document.createElement('div');
     apiDescription.innerHTML = `
-      <div style="margin-bottom: 20px; line-height: 1.5;">
-        <div style="font-weight: 600; margin-bottom: 12px; font-size: 14px;">OpenAI API Key</div>
-        <div style="color: #666; font-size: 14px;">
-          To use the AI chat feature:
-          <ol style="margin-top: 12px; margin-left: 20px;">
-            <li>Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #ff0000;">OpenAI's website</a></li>
-            <li>Enter your key below (starts with 'sk-')</li>
-            <li>Click Save to securely store your key</li>
-          </ol>
+        <div style="margin-bottom: 16px;">
+            <p>To use the AI chat feature, you need an OpenAI API key:</p>
+            <ol style="margin-left: 20px; margin-bottom: 16px;">
+                <li>Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #ff0000;">OpenAI's website</a></li>
+                <li>Enter your key below (starts with 'sk-')</li>
+                <li>Click Save to securely store your key</li>
+            </ol>
         </div>
-      </div>
     `;
     
     const apiInput = document.createElement('input');
@@ -500,9 +792,9 @@
     
     // Load existing API key
     chrome.storage.local.get('openaiApiKey', (data) => {
-      if (data.openaiApiKey) {
-        apiInput.value = data.openaiApiKey;
-      }
+        if (data.openaiApiKey) {
+            apiInput.value = data.openaiApiKey;
+        }
     });
     
     const saveButton = document.createElement('button');
@@ -510,14 +802,14 @@
     saveButton.className = 'settings-save-button';
     
     saveButton.addEventListener('click', () => {
-      const apiKey = apiInput.value.trim();
-      if (!apiKey.startsWith('sk-')) {
-        showNotification('Invalid API key format', 'error');
-        return;
-      }
-      chrome.storage.local.set({ openaiApiKey: apiKey }, () => {
-        showNotification('API key saved successfully');
-      });
+        const apiKey = apiInput.value.trim();
+        if (!apiKey.startsWith('sk-')) {
+            showNotification('Invalid API key format', 'error');
+            return;
+        }
+        chrome.storage.local.set({ openaiApiKey: apiKey }, () => {
+            showNotification('API key saved successfully');
+        });
     });
 
     aiSection.appendChild(aiTitle);
@@ -527,46 +819,46 @@
     
     settingsContainer.appendChild(aiSection);
     mainContainer.appendChild(settingsContainer);
-}
+  }
 
-function handleSendMessage() {
-    const textarea = document.getElementById('metube-chat-input');
-  const message = textarea.value.trim();
-  if (!message) return;
+  function handleSendMessage() {
+    const textarea = document.getElementById('readtube-chat-input');
+    const message = textarea.value.trim();
+    if (!message) return;
 
-  // Add user message to chat
-  addMessageToChat(message, 'user');
-  textarea.value = '';
+    // Add user message to chat
+    addMessageToChat(message, 'user');
+    textarea.value = '';
 
-  // Send to OpenAI
-  sendToOpenAI(message);
-}
+    // Send to OpenAI
+    sendToOpenAI(message);
+  }
 
-function addMessageToChat(message, type) {
-    const messagesContainer = document.getElementById('metube-messages');
-  const messageDiv = document.createElement('div');
-    messageDiv.className = `metube-message metube-${type}-message`;
-  messageDiv.textContent = message;
-  messagesContainer.appendChild(messageDiv);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+  function addMessageToChat(message, type) {
+    const messagesContainer = document.getElementById('readtube-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `readtube-message readtube-${type}-message`;
+    messageDiv.textContent = message;
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
 
-async function sendToOpenAI(message) {
-  try {
-    const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
-    if (!openaiApiKey) {
+  async function sendToOpenAI(message) {
+    try {
+        const { openaiApiKey } = await chrome.storage.local.get('openaiApiKey');
+        if (!openaiApiKey) {
             addMessageToChat('⚠️ Please add your OpenAI API key in the Settings tab first.', 'system');
-        return;
-      }
+            return;
+        }
 
         // Remove previous loading message if exists
-        const messagesContainer = document.getElementById('metube-messages');
-        const loadingMessage = messagesContainer.querySelector('.metube-message:last-child');
+        const messagesContainer = document.getElementById('readtube-messages');
+        const loadingMessage = messagesContainer.querySelector('.readtube-message:last-child');
         if (loadingMessage?.textContent === 'Loading...') {
             messagesContainer.removeChild(loadingMessage);
         }
-      
-    addMessageToChat('Loading...', 'system');
+        
+        addMessageToChat('Loading...', 'system');
 
         // Prepare the messages array with better context
         const messages = [
@@ -676,7 +968,7 @@ async function sendToOpenAI(message) {
         }
 
         // Remove loading message
-        const lastMessage = messagesContainer.querySelector('.metube-message:last-child');
+        const lastMessage = messagesContainer.querySelector('.readtube-message:last-child');
         if (lastMessage?.textContent === 'Loading...') {
             messagesContainer.removeChild(lastMessage);
         }
@@ -701,91 +993,169 @@ async function sendToOpenAI(message) {
 
   function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
-    notification.className = 'metube-notification';
+    notification.className = `readtube-notification ${type}`;
     notification.textContent = message;
-    notification.style.position = 'fixed';
-    notification.style.bottom = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '10px 20px';
-    notification.style.borderRadius = '4px';
-    notification.style.zIndex = '10000';
-    notification.style.color = '#ffffff';
-    notification.style.background = type === 'success' ? 'rgba(0, 128, 0, 0.8)' : 'rgba(255, 0, 0, 0.8)';
-    
     document.body.appendChild(notification);
     
     setTimeout(() => {
-      notification.remove();
+        notification.remove();
     }, 3000);
   }
 
   // Add the transcript-related functions
 async function fetchTranscript() {
-    const transcriptContent = document.getElementById('metube-transcript-content');
-    if (!transcriptContent) return;
+    // Ensure we have a container
+    let transcriptContent = document.getElementById('readtube-transcript-content');
+    if (!transcriptContent) {
+        console.log('Creating transcript container');
+        const mainContainer = document.getElementById('readtube-main-container');
+        if (!mainContainer) {
+            console.error('Main container not found');
+            return false;
+        }
+        transcriptContent = document.createElement('div');
+        transcriptContent.id = 'readtube-transcript-content';
+        mainContainer.appendChild(transcriptContent);
+    }
 
-    // Show loading state
-    transcriptContent.innerHTML = '<div style="padding: 20px; text-align: center;">Loading transcript...</div>';
+    // Clear existing content
+    transcriptContent.innerHTML = '';
 
     try {
-        // Get video ID from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const videoId = urlParams.get('v');
-        if (!videoId) throw new Error('Could not find video ID');
-
-        // Try to get the ytInitialData from the page
-        const ytInitialData = window.ytInitialData || {};
-        const playerResponse = window.ytInitialPlayerResponse || {};
-        
-        // Log data for debugging
-        console.log('Attempting to fetch transcript for video:', videoId);
-        
-        // Try to get captions from player response
-        const captions = playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-        if (!captions || captions.length === 0) {
-            // Try alternative method using page source
-            const pageSource = document.documentElement.innerHTML;
-            const captionsMatch = pageSource.match(/"captionTracks":\[(.*?)\]/);
-            
-            if (!captionsMatch) {
-                throw new Error('No captions data found in page source');
-            }
-            
-            try {
-                const captionsData = JSON.parse(`[${captionsMatch[1]}]`);
-                if (captionsData.length > 0) {
-                    // Get the first available transcript URL
-                    const transcriptUrl = captionsData[0].baseUrl;
-                    await fetchAndDisplayTranscript(transcriptUrl, transcriptContent);
-                    return;
-                }
-            } catch (parseError) {
-                console.error('Error parsing captions data:', parseError);
-            }
-                          } else {
-            // Use captions from player response
-            const transcriptUrl = captions[0].baseUrl;
-            await fetchAndDisplayTranscript(transcriptUrl, transcriptContent);
-            return;
+        const videoId = getVideoId();
+        if (!videoId) {
+            throw new Error('Could not find video ID');
         }
 
-        throw new Error('Could not find caption data');
+        let transcript = [];
+        let success = false;
+        
+        // First try to get transcript from ytInitialPlayerResponse
+        try {
+            const ytInitialPlayerResponse = window.ytInitialPlayerResponse;
+            if (ytInitialPlayerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks?.length > 0) {
+                const captionTrack = ytInitialPlayerResponse.captions.playerCaptionsTracklistRenderer.captionTracks[0];
+                const response = await fetch(captionTrack.baseUrl);
+                if (!response.ok) throw new Error('Failed to fetch transcript');
+                const text = await response.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(text, 'text/xml');
+                const textElements = xml.getElementsByTagName('text');
+                
+                for (const element of textElements) {
+                    const start = parseFloat(element.getAttribute('start'));
+                    const duration = parseFloat(element.getAttribute('dur') || '0');
+                    const text = element.textContent.trim();
+                    if (text) {
+                        transcript.push({ start, duration, text });
+                    }
+                }
+                if (transcript.length > 0) success = true;
+            }
+        } catch (e) {
+            console.log('Failed to get transcript from ytInitialPlayerResponse:', e);
+        }
+        
+        // If no transcript found in ytInitialPlayerResponse, try parsing page source
+        if (!success) {
+            try {
+                const response = await fetch(`https://www.youtube.com/watch?v=${videoId}`);
+                if (!response.ok) throw new Error('Failed to fetch video page');
+                const html = await response.text();
+                const match = html.match(/"captionTracks":\[(.*?)\]/);
+                if (!match) {
+                    throw new Error('No captions available for this video');
+                }
+                
+                const captionTracks = JSON.parse(`[${match[1]}]`);
+                if (captionTracks.length === 0) {
+                    throw new Error('No caption tracks found');
+                }
+                
+                const firstTrack = captionTracks[0];
+                const captionResponse = await fetch(firstTrack.baseUrl);
+                if (!captionResponse.ok) throw new Error('Failed to fetch captions');
+                const captionText = await captionResponse.text();
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(captionText, 'text/xml');
+                const textElements = xml.getElementsByTagName('text');
+                
+                transcript = [];
+                for (const element of textElements) {
+                    const start = parseFloat(element.getAttribute('start'));
+                    const duration = parseFloat(element.getAttribute('dur') || '0');
+                    const text = element.textContent.trim();
+                    if (text) {
+                        transcript.push({ start, duration, text });
+                    }
+                }
+                if (transcript.length > 0) success = true;
+            } catch (e) {
+                console.log('Failed to get transcript from page source:', e);
+                throw e;
+            }
+        }
 
+        if (transcript.length === 0) {
+            throw new Error('No transcript content found');
+        }
+
+        // Format and display transcript
+        let formattedTranscript = '';
+        transcript.forEach(({ start, text }) => {
+            const minutes = Math.floor(start / 60);
+            const seconds = Math.floor(start % 60);
+            const timestamp = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            const line = document.createElement('div');
+            line.className = 'transcript-line';
+            
+            const timestampSpan = document.createElement('span');
+            timestampSpan.className = 'transcript-timestamp';
+            timestampSpan.textContent = timestamp;
+            timestampSpan.onclick = () => {
+                const video = document.querySelector('video');
+                if (video) {
+                    video.currentTime = start;
+                    video.play();
+                    timestampSpan.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+                    setTimeout(() => {
+                        timestampSpan.style.backgroundColor = '';
+                    }, 500);
+                }
+            };
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = 'transcript-text';
+            textSpan.textContent = text;
+            
+            line.appendChild(timestampSpan);
+            line.appendChild(textSpan);
+            transcriptContent.appendChild(line);
+            
+            formattedTranscript += `[${timestamp}] ${text}\n`;
+        });
+
+        // Store transcript for AI features
+        window.readtubeTranscript = formattedTranscript.trim();
+        window.videoTranscript = formattedTranscript.trim();
+        return true;
+        
     } catch (error) {
-        console.error('Transcript error:', error);
+        console.error('Error fetching transcript:', error);
         transcriptContent.innerHTML = `
             <div style="padding: 20px; text-align: center; color: #666;">
-                ${error.message}
-                <br><br>
-                <small>Debug info: Check console for details</small>
+                <p>Could not load transcript.</p>
+                <p style="font-size: 12px;">${error.message}</p>
             </div>
         `;
+        return false;
     }
 }
 
-  function createTranscriptDisplay() {
+function createTranscriptDisplay() {
     const container = document.createElement('div');
-    container.className = 'metube-transcript-container';
+    container.className = 'readtube-transcript-container';
     
     // Add title section
     const titleElement = document.createElement('div');
@@ -870,7 +1240,7 @@ async function fetchTranscript() {
     floatingControls.appendChild(downloadButton);
     
     const transcriptContent = document.createElement('div');
-    transcriptContent.id = 'metube-transcript-content';
+    transcriptContent.id = 'readtube-transcript-content';
     
     contentWrapper.appendChild(floatingControls);
     contentWrapper.appendChild(transcriptContent);
@@ -948,226 +1318,244 @@ async function fetchTranscript() {
 }
 
 function searchTranscript(query) {
-    const content = document.getElementById('metube-transcript-content');
+    const content = document.getElementById('readtube-transcript-content');
     const searchCounter = document.getElementById('search-counter');
     if (!content) return;
     
-    if (!query) {
-        // Reset search
-        content.querySelectorAll('.transcript-line').forEach(line => {
-            const text = line.querySelector('.transcript-text');
-            if (text) text.innerHTML = text.textContent;
-        line.classList.remove('search-match');
-        });
-      if (searchCounter) searchCounter.textContent = '';
-        return;
-      }
-      
-    let matchCount = 0;
-    let currentMatch = 0;
-    const matches = [];
-    
+    // Reset all previous highlights
     content.querySelectorAll('.transcript-line').forEach(line => {
         const text = line.querySelector('.transcript-text');
-        if (!text) return;
-        
-        const originalText = text.textContent;
-        const regex = new RegExp(query, 'gi');
-      const matches = originalText.match(regex);
-      
-      if (matches) {
-        matchCount += matches.length;
-        line.classList.add('search-match');
-        text.innerHTML = originalText.replace(regex, match => 
-            `<span class="search-highlight">${match}</span>`
-        );
-      } else {
-        line.classList.remove('search-match');
-        text.innerHTML = originalText;
-      }
+        if (text) {
+            text.innerHTML = text.textContent;
+            line.classList.remove('search-match', 'current-match');
+        }
     });
     
-    // Update counter
-    if (searchCounter) {
-      searchCounter.textContent = matchCount > 0 ? `${currentMatch + 1} of ${matchCount} matches` : 'No matches found';
+    if (!query) {
+        if (searchCounter) searchCounter.textContent = '';
+        return;
     }
     
-    // Scroll to first match
-    if (matchCount > 0) {
-      const firstMatch = content.querySelector('.search-match');
-      if (firstMatch) {
-        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+    try {
+        const regex = new RegExp(query, 'gi');
+        let totalMatches = 0;
+        const matches = [];
+        
+        // First pass: Count matches and store their positions
+        content.querySelectorAll('.transcript-line').forEach((line, lineIndex) => {
+            const text = line.querySelector('.transcript-text');
+            if (!text) return;
+            
+            const content = text.textContent;
+            const lineMatches = [...content.matchAll(regex)];
+            
+            if (lineMatches.length > 0) {
+                line.classList.add('search-match');
+                matches.push({
+                    line: line,
+                    text: text,
+                    matches: lineMatches
+                });
+                totalMatches += lineMatches.length;
+            }
+        });
+        
+        // Update counter
+        if (searchCounter) {
+            searchCounter.textContent = totalMatches > 0 ? 
+                `1 of ${totalMatches} matches` : 
+                'No matches found';
+        }
+        
+        // Second pass: Apply highlighting
+        matches.forEach(({ line, text, matches }) => {
+            let html = text.textContent;
+            let offset = 0;
+            
+            matches.forEach(match => {
+                const before = html.substring(0, match.index + offset);
+                const highlighted = html.substring(match.index + offset, match.index + match.length + offset);
+                const after = html.substring(match.index + match.length + offset);
+                
+                html = `${before}<span class="search-highlight" style="background-color: #ffeb3b; color: #000;">${highlighted}</span>${after}`;
+                offset += '<span class="search-highlight" style="background-color: #ffeb3b; color: #000;">'.length + '</span>'.length;
+            });
+            
+            text.innerHTML = html;
+        });
+        
+        // Scroll to first match if exists
+        if (matches.length > 0) {
+            matches[0].line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            matches[0].line.classList.add('current-match');
+        }
+        
+    } catch (error) {
+        console.error('Search error:', error);
+        if (searchCounter) {
+            searchCounter.textContent = 'Invalid search pattern';
+        }
     }
-  }
+}
 
-  // Add navigation functions
-  function navigateSearch(direction) {
-    const content = document.getElementById('metube-transcript-content');
+// Update navigation function
+function navigateSearch(direction) {
+    const content = document.getElementById('readtube-transcript-content');
     const searchCounter = document.getElementById('search-counter');
     if (!content || !searchCounter) return;
     
     const matches = Array.from(content.querySelectorAll('.search-match'));
     if (matches.length === 0) return;
     
-    const currentText = document.querySelector('.search-input').value;
-    if (!currentText) return;
+    // Find current match
+    const currentMatch = content.querySelector('.current-match');
+    const currentIndex = currentMatch ? matches.indexOf(currentMatch) : -1;
     
-    const currentMatchIndex = matches.findIndex(match => 
-      match.getBoundingClientRect().top >= 0
-    );
+    // Remove current match highlight
+    if (currentMatch) {
+        currentMatch.classList.remove('current-match');
+    }
     
+    // Calculate next index
     let nextIndex;
     if (direction === 'next') {
-      nextIndex = (currentMatchIndex + 1) % matches.length;
+        nextIndex = currentIndex < matches.length - 1 ? currentIndex + 1 : 0;
     } else {
-      nextIndex = currentMatchIndex > 0 ? currentMatchIndex - 1 : matches.length - 1;
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : matches.length - 1;
     }
     
+    // Apply new current match
+    matches[nextIndex].classList.add('current-match');
     matches[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    searchCounter.textContent = `${nextIndex + 1} of ${matches.length} matches`;
-  }
-
-  async function fetchAndDisplayTranscript(transcriptUrl, container) {
-    try {
-      const urlWithParams = `${transcriptUrl}&fmt=json3`;
-      const response = await fetch(urlWithParams);
-      const data = await response.json();
-      
-      container.innerHTML = '';
-      
-      let currentText = '';
-      let lastTimestamp = 0;
-      let lastTime = 0;
-      let isFirstLine = true;
-      
-      data.events.forEach((event, index) => {
-        if (!event.segs) return;
-        
-        const time = event.tStartMs / 1000;
-        const text = event.segs.map(seg => seg.utf8).join('').trim();
-        
-        if (!text) return; // Skip empty text
-        
-        // Special handling for the first line
-        if (isFirstLine) {
-          // Only show 0:00 if there's content after 0.5 seconds
-          // This helps avoid showing 0:00 for pre-roll silence
-          if (time < 0.5) {
-            currentText = text;
-            lastTimestamp = 0;
-            lastTime = time;
-            isFirstLine = false;
-            return;
-          }
-          isFirstLine = false;
-        }
-        
-        // Add to current text if less than 10 seconds have passed
-        if (time - lastTime < 10 && index !== data.events.length - 1) {
-          currentText += ' ' + text;
-          return;
-        }
-        
-        // Create line if we have accumulated text or it's been 10+ seconds
-        if (currentText || time - lastTime >= 10 || index === data.events.length - 1) {
-          // Add current event's text if this is the last one
-          if (index === data.events.length - 1) {
-            currentText += ' ' + text;
-          }
-          
-          const lineDiv = document.createElement('div');
-          lineDiv.className = 'transcript-line';
-          
-          const timestamp = document.createElement('span');
-          timestamp.className = 'transcript-timestamp';
-          timestamp.textContent = formatTime(lastTimestamp);
-          timestamp.setAttribute('data-time', lastTimestamp.toFixed(3));
-          
-          // Enhanced click handler with proper time seeking
-          timestamp.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const video = document.querySelector('video');
-            if (video) {
-              const timeInSeconds = parseFloat(timestamp.getAttribute('data-time'));
-              if (!isNaN(timeInSeconds)) {
-                video.currentTime = timeInSeconds;
-                // Visual feedback
-                timestamp.style.backgroundColor = '#ff0000';
-                timestamp.style.color = '#ffffff';
-                setTimeout(() => {
-                  timestamp.style.backgroundColor = '';
-                  timestamp.style.color = '';
-                }, 300);
-              }
-            }
-          };
-          
-          const textSpan = document.createElement('span');
-          textSpan.className = 'transcript-text';
-          textSpan.textContent = currentText.trim();
-          
-          lineDiv.appendChild(timestamp);
-          lineDiv.appendChild(textSpan);
-          container.appendChild(lineDiv);
-          
-          // Reset for next line
-          currentText = text;
-          lastTimestamp = time;
-        }
-        
-        lastTime = time;
-      });
-    } catch (error) {
-      throw new Error(`Failed to fetch transcript: ${error.message}`);
-    }
-  }
-
-  function formatTime(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = Math.floor(seconds % 60);
     
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    // Update counter
+    const totalMatches = matches.length;
+    searchCounter.textContent = `${nextIndex + 1} of ${totalMatches} matches`;
+}
+
+// Add these styles to the document
+const style = document.createElement('style');
+style.textContent = `
+    .search-match {
+        background: transparent;
     }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  }
+    .current-match {
+        background: rgba(255, 235, 59, 0.2) !important;
+    }
+    .search-highlight {
+        background-color: #ffeb3b;
+        color: #000;
+    }
+    @keyframes pulse {
+        0% { background-color: rgba(255, 235, 59, 0.2); }
+        50% { background-color: rgba(255, 235, 59, 0.4); }
+        100% { background-color: rgba(255, 235, 59, 0.2); }
+    }
+    .current-match {
+        animation: pulse 2s infinite;
+    }
+`;
+document.head.appendChild(style);
 
-  // Add notification function at the top level
-  function showActionNotification(message) {
-    const notification = document.createElement('div');
-    notification.style.position = 'fixed';
-    notification.style.bottom = '24px';
-    notification.style.left = '50%';
-    notification.style.transform = 'translateX(-50%)';
-    notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    notification.style.color = '#fff';
-    notification.style.padding = '8px 16px';
-    notification.style.borderRadius = '4px';
-    notification.style.fontSize = '14px';
-    notification.style.zIndex = '10000';
-    notification.style.animation = 'fadeInOut 2s ease-in-out';
-    notification.textContent = message;
+function showAskInterface() {
+    const mainContainer = document.getElementById('readtube-main-container');
+    if (!mainContainer) return;
+    
+    mainContainer.innerHTML = '';
 
-    // Add the animation keyframes
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes fadeInOut {
-        0% { opacity: 0; transform: translate(-50%, 20px); }
-        15% { opacity: 1; transform: translate(-50%, 0); }
-        85% { opacity: 1; transform: translate(-50%, 0); }
-        100% { opacity: 0; transform: translate(-50%, -20px); }
-      }
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.height = '100%';
+    container.style.gap = '16px';
+    container.style.padding = '16px';
+
+    // Create chat interface
+    const chatContainer = document.createElement('div');
+    chatContainer.className = 'readtube-chat-container';
+    chatContainer.style.flex = '1';
+    chatContainer.style.minHeight = '0';
+
+    const messagesContainer = document.createElement('div');
+    messagesContainer.className = 'readtube-messages';
+    messagesContainer.id = 'readtube-messages';
+
+    // Add welcome message
+    const welcomeMessage = document.createElement('div');
+    welcomeMessage.className = 'readtube-message readtube-system-message';
+    welcomeMessage.innerHTML = `
+        <strong>👋 Welcome! Ask me anything about this video.</strong>
+        <p style="margin-top: 8px; font-size: 13px;">I can help you understand the content, find specific information, or analyze key points.</p>
     `;
-    document.head.appendChild(style);
-    
-    document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.remove();
-      style.remove();
-    }, 2000);
-  }
+    messagesContainer.appendChild(welcomeMessage);
+
+    // Create quick questions section
+    const quickQuestions = [
+        "📝 Summarize this video",
+        "⭐ What are the main points?",
+        "❓ What questions were addressed?",
+        "💡 What are the key insights?",
+        "🎯 What are the takeaways?"
+    ];
+
+    const questionsContainer = document.createElement('div');
+    questionsContainer.style.display = 'flex';
+    questionsContainer.style.flexWrap = 'wrap';
+    questionsContainer.style.gap = '8px';
+    questionsContainer.style.marginTop = '12px';
+
+    quickQuestions.forEach(question => {
+        const questionButton = document.createElement('button');
+        questionButton.className = 'quick-question-button';
+        questionButton.textContent = question;
+        questionButton.onclick = () => {
+            const textarea = document.getElementById('readtube-chat-input');
+            if (textarea) {
+                textarea.value = question;
+                handleSendMessage();
+            }
+        };
+        questionsContainer.appendChild(questionButton);
+    });
+
+    messagesContainer.appendChild(questionsContainer);
+
+    const inputContainer = document.createElement('div');
+    inputContainer.className = 'readtube-input-container';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'readtube-chat-input';
+    textarea.placeholder = 'Ask anything about the video...';
+    textarea.id = 'readtube-chat-input';
+
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+    });
+
+    const sendButton = document.createElement('button');
+    sendButton.className = 'readtube-send-button';
+    sendButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+        </svg>
+    `;
+    sendButton.onclick = handleSendMessage;
+
+    inputContainer.appendChild(textarea);
+    inputContainer.appendChild(sendButton);
+    chatContainer.appendChild(messagesContainer);
+    chatContainer.appendChild(inputContainer);
+
+    container.appendChild(chatContainer);
+    mainContainer.appendChild(container);
+}
+
+function getVideoId() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('v');
+}
 
 })();

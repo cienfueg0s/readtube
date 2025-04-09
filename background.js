@@ -1,7 +1,7 @@
-// JTube4 - background.js
+// ReadTube - background.js
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('JTube4 extension installed');
+  console.log('ReadTube extension installed');
   
   // Set default settings if not already set
   chrome.storage.sync.get(['theme', 'fontSize', 'apiKey', 'aiModel'], function(result) {

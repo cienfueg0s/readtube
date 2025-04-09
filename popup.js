@@ -179,12 +179,12 @@ function initializePopup() {
 
     // Documentation and Report Issue links
     document.getElementById('documentation').addEventListener('click', () => {
-        chrome.tabs.create({ url: 'https://github.com/cienfueg0s/metube' });
+        chrome.tabs.create({ url: 'https://github.com/cienfueg0s/readtube' });
         window.close();
     });
 
     document.getElementById('reportIssue').addEventListener('click', () => {
-        chrome.tabs.create({ url: 'https://github.com/cienfueg0s/metube/issues/new' });
+        chrome.tabs.create({ url: 'https://github.com/cienfueg0s/readtube/issues/new' });
         window.close();
     });
 

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "WeTube",
+  "name": "ReadTube",
   "version": "1.0",
   "description": "Enhanced YouTube transcript viewer with AI chat",
   "icons": {
@@ -10,7 +10,7 @@
     "128": "icon-128.png"
   },
   "action": {
-    "default_title": "MeTube",
+    "default_title": "ReadTube",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icon-16.png",
