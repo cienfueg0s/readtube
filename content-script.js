@@ -478,19 +478,76 @@
     // Create footer
     const footer = document.createElement('div');
     footer.className = 'readtube-footer';
-    footer.style.padding = '12px';
+    footer.style.padding = '10px 16px';
     footer.style.borderTop = '1px solid rgba(0, 0, 0, 0.1)';
     footer.style.backgroundColor = '#f8f8f8';
     footer.style.fontSize = '12px';
     footer.style.color = '#666';
+    footer.style.display = 'flex';
+    footer.style.alignItems = 'center';
+    footer.style.justifyContent = 'space-between';
+    
+    // Add footer content
     footer.innerHTML = `
-        <div style="text-align: center;">
-            <a href="https://github.com/yourusername/readtube" target="_blank" style="color: #666; text-decoration: none;">
-                ReadTube v1.1.07
-            </a>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="readtube-transcript-status" style="color: #999;">Transcript: Loading...</span>
+            <span style="color: #999;">•</span>
+            <span id="readtube-ai-status" style="color: #999;">AI: Not configured</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="readtube-settings-btn" style="background: none; border: none; padding: 4px; cursor: pointer; opacity: 0.6; display: flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
         </div>
     `;
-    
+
+    // Add hover effect for settings button
+    const settingsBtn = footer.querySelector('#readtube-settings-btn');
+    if (settingsBtn) {
+        settingsBtn.onmouseover = () => {
+            settingsBtn.style.opacity = '1';
+        };
+        settingsBtn.onmouseout = () => {
+            settingsBtn.style.opacity = '0.6';
+        };
+        settingsBtn.onclick = () => {
+            updateActiveTab(document.querySelector('.readtube-tab-settings'));
+            showSettings();
+        };
+    }
+
+    // Update status indicators when needed
+    const updateStatus = () => {
+        const transcriptStatus = footer.querySelector('#readtube-transcript-status');
+        const aiStatus = footer.querySelector('#readtube-ai-status');
+        
+        if (transcriptStatus) {
+            transcriptStatus.textContent = `Transcript: ${window.videoTranscript ? 'Available' : 'Not loaded'}`;
+            transcriptStatus.style.color = window.videoTranscript ? '#00a67e' : '#999';
+        }
+        
+        if (aiStatus) {
+            chrome.storage.local.get('openaiApiKey', (data) => {
+                aiStatus.textContent = `AI: ${data.openaiApiKey ? 'Ready' : 'Not configured'}`;
+                aiStatus.style.color = data.openaiApiKey ? '#00a67e' : '#999';
+            });
+        }
+    };
+
+    // Initial status update
+    updateStatus();
+
+    // Update status when transcript is loaded
+    const originalFetchTranscript = window.fetchTranscript;
+    window.fetchTranscript = async function() {
+        const result = await originalFetchTranscript.apply(this, arguments);
+        updateStatus();
+        return result;
+    };
+
     // Assemble the sidebar
     sidebarContainer.appendChild(header);
     sidebarContainer.appendChild(tabs);
