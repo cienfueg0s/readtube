@@ -223,13 +223,25 @@
         if (ytdApp) {
             clearInterval(waitForYouTube);
             console.log('YouTube content ready, creating sidebar');
-            createSidebar();
-            sidebarInitialized = true;
+            
+            // Load settings first
+            loadSettings().then(() => {
+                createSidebar();
+                sidebarInitialized = true;
+                console.log('Sidebar initialized successfully');
+            }).catch(error => {
+                console.error('Error initializing sidebar:', error);
+            });
         }
     }, 1000);
 
     // Clear interval after 10 seconds to prevent infinite checking
-    setTimeout(() => clearInterval(waitForYouTube), 10000);
+    setTimeout(() => {
+        clearInterval(waitForYouTube);
+        if (!sidebarInitialized) {
+            console.log('Sidebar initialization timed out');
+        }
+    }, 10000);
   }
 
   // Watch for URL changes
@@ -455,14 +467,35 @@
     tabs.appendChild(askTab);
     tabs.appendChild(settingsTab);
     
-    const mainContainer = document.createElement('div');
-    mainContainer.id = 'readtube-main-container';
-    mainContainer.style.flex = '1';
-    mainContainer.style.overflow = 'auto';
+    // Create content area
+    const contentArea = document.createElement('div');
+    contentArea.id = 'readtube-main-container';
+    contentArea.style.flex = '1';
+    contentArea.style.overflow = 'hidden';
+    contentArea.style.display = 'flex';
+    contentArea.style.flexDirection = 'column';
     
+    // Create footer
+    const footer = document.createElement('div');
+    footer.className = 'readtube-footer';
+    footer.style.padding = '12px';
+    footer.style.borderTop = '1px solid rgba(0, 0, 0, 0.1)';
+    footer.style.backgroundColor = '#f8f8f8';
+    footer.style.fontSize = '12px';
+    footer.style.color = '#666';
+    footer.innerHTML = `
+        <div style="text-align: center;">
+            <a href="https://github.com/yourusername/readtube" target="_blank" style="color: #666; text-decoration: none;">
+                ReadTube v1.1.07
+            </a>
+        </div>
+    `;
+    
+    // Assemble the sidebar
     sidebarContainer.appendChild(header);
     sidebarContainer.appendChild(tabs);
-    sidebarContainer.appendChild(mainContainer);
+    sidebarContainer.appendChild(contentArea);
+    sidebarContainer.appendChild(footer);
     sidebarWrapper.appendChild(sidebarContainer);
     document.body.appendChild(sidebarWrapper);
 
@@ -516,9 +549,31 @@
     const mainContainer = document.getElementById('readtube-main-container');
     if (mainContainer) {
         mainContainer.innerHTML = '';
-        mainContainer.appendChild(createTranscriptDisplay());
+        const transcriptContainer = createTranscriptDisplay();
+        mainContainer.appendChild(transcriptContainer);
+        
+        // Create transcript content div if it doesn't exist
+        let transcriptContent = document.getElementById('readtube-transcript-content');
+        if (!transcriptContent) {
+            transcriptContent = document.createElement('div');
+            transcriptContent.id = 'readtube-transcript-content';
+            transcriptContent.style.height = '100%';
+            transcriptContent.style.overflow = 'auto';
+            transcriptContent.style.padding = '16px 20px 32px';
+            mainContainer.appendChild(transcriptContent);
+        }
+        
         // Auto-fetch transcript
-        fetchTranscript();
+        fetchTranscript().then(success => {
+            if (!success) {
+                transcriptContent.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: #666;">
+                        <p>No transcript available for this video.</p>
+                        <p style="font-size: 12px;">Try enabling captions in the video player first.</p>
+                    </div>
+                `;
+            }
+        });
     }
   }
   
